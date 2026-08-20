@@ -54,6 +54,10 @@ viên tự kiểm tra và chịu trách nhiệm. Chi tiết được ghi trong
 |       |-- coupon_data.json
 |       `-- order_status_data.json
 |-- reports/
+|   |-- analysis/
+|   |   |-- login_test_design.md
+|   |   |-- coupon_test_design.md
+|   |   `-- admin_order_status_test_design.md
 |   |-- main_report.md
 |   |-- main_report.pdf
 |   |-- ai_audit_report.md
