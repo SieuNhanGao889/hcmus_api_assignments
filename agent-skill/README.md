@@ -64,7 +64,9 @@ agent-skill/
 │   └── diagram.png             ← Sơ đồ test generator do sinh viên tự vẽ
 │
 └── demo/
-    ├── demo_script.md          ← Kịch bản thuyết trình và quay video demo
-    ├── demo_notes.md           ← Checklist và ghi chú chuẩn bị cho demo
+    ├── video_link.md          ← Link video demo Agent Skill
     └── demo_prompt.md          ← Prompt sử dụng để demo Agent Skill với một API
 ```
+
+## Demo video
+- Link: [https://youtu.be/4fAWYhzeHzQ](https://youtu.be/4fAWYhzeHzQ)
