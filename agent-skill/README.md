@@ -50,3 +50,21 @@ Mặc định:
 - `docs/2026.HW06.API Testing_En.md` — chỉ đọc khi cần format/coverage riêng của đề
 
 Skill không cache nội dung các file này — mỗi lần chạy phải đọc lại spec thật, không dùng trí nhớ từ lần trước.
+
+## Cấu trúc thư mục
+
+```text
+agent-skill/
+│
+├── SKILL.md                    ← Định nghĩa Agent Skill tái sử dụng để sinh API test case
+│
+├── design/
+│   ├── design.md               ← Giải thích thiết kế và luồng hoạt động của test generator
+│   ├── pseudocode.md           ← Mã giả mô tả thuật toán sinh test case
+│   └── diagram.png             ← Sơ đồ test generator do sinh viên tự vẽ
+│
+└── demo/
+    ├── demo_script.md          ← Kịch bản thuyết trình và quay video demo
+    ├── demo_notes.md           ← Checklist và ghi chú chuẩn bị cho demo
+    └── demo_prompt.md          ← Prompt sử dụng để demo Agent Skill với một API
+```
