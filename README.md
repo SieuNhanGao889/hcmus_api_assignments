@@ -83,10 +83,9 @@ viên tự kiểm tra và chịu trách nhiệm. Chi tiết được ghi trong
 |   |-- postman/
 |   |-- newman/
 |   |-- bugs/
-|   |-- cicd/
-|   |   |-- passing-run/
-|   |   `-- failing-run/
-|   `-- ai/
+|   `-- cicd/
+|       |-- passing-run/
+|       `-- failing-run/
 |-- .github/
 |   `-- workflows/
 |       `-- api-tests.yml
