@@ -1,56 +1,246 @@
 ---
 name: eshop-api-test-generator
-description: Generate, audit, and extend API test cases for the HW06 EShop API Testing assignment, focused on the selected login, coupon, and admin order-status APIs.
+description: Analyze an EShop API specification and generate traceable candidate API test cases for the selected HW06 endpoints.
 metadata:
-  short-description: HW06 EShop API test generator
+  short-description: Specification-to-test-case generator
 ---
 
 # EShop API Test Generator
 
-Use this skill when working on HW06 API Testing deliverables for the EShop SUT, especially when generating test cases, auditing AI output, extending coverage, preparing Postman/Newman artifacts, or drafting the test-generator demo.
+## Purpose
 
-This skill is scoped to the repository assignment and the selected APIs:
+This skill is a reusable API test-case generator for the HW06 EShop SUT.
+
+Given:
+
+- the API specification
+- one selected target endpoint
+- optional assignment/security requirements
+
+it analyzes the endpoint and produces structured candidate API test cases.
+
+This skill focuses on:
+
+`Specification -> Test Design -> Candidate Test Cases`
+
+It does not replace the student's required human review.
+
+It must not fabricate execution evidence, screenshots, Newman reports, GitHub Issues, commit logs, CI/CD results, or human audit decisions.
+
+---
+
+## Scope
+
+The current HW06 repository uses this skill for:
 
 - `POST /api/login`
 - `POST /api/apply-coupon`
 - `PUT /api/admin/orders/:id/status`
 
-Do not use this skill to fabricate execution evidence. Newman reports, screenshots, GitHub Issues, commit logs, and CI/CD run links must come from real execution.
+However, the generation method should remain reusable for similar API endpoints when a compatible specification is provided.
+
+---
 
 ## Required Context
 
-Before generating final artifacts, read these files from the submission repository root:
+Before generating final candidate test cases, read:
 
-- `README.md` for the selected API scope and deliverables.
-- `docs/api_specification.md` for endpoint details.
+- `README.md` for selected API scope when available
+- `docs/api_specification.md` for endpoint details
 
-Read `docs/2026.HW06.API Testing_En.md` when the task involves grading criteria, submission packaging, AI audit, AI critique, CI/CD evidence, or the Agent Skill section.
+Read `docs/2026.HW06.API Testing_En.md` only when assignment-specific coverage or formatting requirements are needed.
 
-## Core Requirements
+The API specification is the primary source of truth for endpoint behavior.
 
-For each selected API:
+Do not treat examples in this skill as authoritative business rules.
 
-- Generate at least 35 AI-generated test cases.
-- Audit every generated test case as `VALID`, `INVALID`, or `INCOMPLETE`.
-- Correct invalid or incomplete cases.
-- Add at least 5 manual extension cases.
-- Cover domain partitions, boundary values, missing/null/wrong-type fields, security, schema validation, and state behavior where applicable.
-- Include `X-Student-Id: 23127364` in every executable request.
+---
 
-Across the full suite:
+## Core Behavior
 
-- Prefer Postman + Newman artifacts unless the user explicitly chooses another framework.
-- Use variables for `baseUrl`, `studentId`, tokens, user IDs, coupon codes, order IDs, and reusable setup data.
-- Keep generated, audited, and manually extended cases distinguishable.
-- Be explicit when a case depends on seed data, admin credentials, or a previous request.
+For one target API:
+
+1. Parse the endpoint definition.
+2. Extract request structure.
+3. Extract authentication and authorization rules.
+4. Extract response and error schemas.
+5. Extract business/state rules.
+6. Build test-design dimensions.
+7. Generate at least 35 candidate cases when used for HW06.
+8. Attach traceability metadata to every case.
+9. Set every generated case to `PENDING_HUMAN_REVIEW`.
+10. Export structured rows suitable for Markdown, CSV, Excel, or later Postman conversion.
+
+The skill must not finalize a generated case as `VALID`, `INVALID`, or `INCOMPLETE`.
+
+Those decisions belong to the student's human-audit phase.
+
+---
+
+## Generation Pipeline
+
+### Step 1 — Parse Specification
+
+Extract:
+
+- method
+- path
+- headers
+- path parameters
+- query parameters
+- body fields
+- field types
+- required/optional status
+- format rules
+- boundary constraints
+- authentication
+- authorization
+- success status codes
+- error status codes
+- success schema
+- error schema
+- business rules
+- state rules
+- relevant security requirements
+
+If a value is not defined by the specification, mark it as unknown.
+
+Do not guess.
+
+---
+
+### Step 2 — Build Parameter Partitions
+
+For every input parameter, consider applicable classes:
+
+- valid nominal value
+- minimum boundary
+- just below minimum
+- maximum boundary
+- just above maximum
+- empty
+- missing
+- null
+- wrong type
+- malformed format
+- semantically invalid value
+- unexpected extra value
+
+Only generate a class when it is meaningful for the parameter.
+
+Do not mechanically create impossible cases.
+
+---
+
+### Step 3 — Build Security Dimensions
+
+Identify applicable security cases from the endpoint behavior and assignment requirements.
+
+Possible categories:
+
+- missing authentication
+- invalid authentication
+- expired/malformed/tampered token
+- authorization bypass
+- role escalation
+- IDOR
+- cross-user access
+- injection-style input
+- account enumeration
+- sensitive-data leakage
+- business-rule abuse
+
+Security cases must be tied to a plausible attack surface.
+
+Do not add irrelevant security tests merely to increase case count.
+
+---
+
+### Step 4 — Build Schema Dimensions
+
+Generate assertions for:
+
+- expected HTTP status
+- required response properties
+- field types
+- nested objects
+- nullable behavior
+- error shape
+- absence of sensitive fields
+- business-result consistency
+
+Do not invent response fields that are not in the specification.
+
+---
+
+### Step 5 — Build State Dimensions
+
+If the endpoint reads or modifies state, identify:
+
+- prerequisite state
+- valid transition
+- invalid transition
+- terminal-state behavior
+- repeated operation
+- replay behavior
+- persisted-state verification
+- cross-request dependency
+
+Only treat a transition as valid/invalid when the specification supports that expectation.
+
+Otherwise mark the case as exploratory.
+
+---
+
+### Step 6 — Identify Ambiguities
+
+Before generating cases, list unresolved questions such as:
+
+- unspecified case sensitivity
+- unspecified whitespace behavior
+- unspecified rate-limit threshold
+- unspecified token expiry behavior
+- unspecified exact error status
+- unclear state transition
+
+For ambiguous behavior:
+
+- do not invent an expected result
+- label the case as exploratory when useful
+- state what observation would clarify the behavior
+
+---
+
+### Step 7 — Generate Candidate Cases
+
+For HW06, generate at least 35 AI-generated candidate cases per selected API.
+
+Prefer meaningful coverage breadth over repetitive variations.
+
+Recommended distribution depends on the endpoint, but should usually include:
+
+- positive behavior
+- domain partitions
+- boundaries
+- missing/null/wrong-type inputs
+- security
+- schema
+- state/business behavior
+
+Every case must include a clear objective and executable request plan.
+
+---
 
 ## Test Case Format
 
-Use a table or spreadsheet-ready rows with these fields:
+Use spreadsheet-ready fields:
 
 - `case_id`
 - `api`
 - `source`
+- `requirement_ref`
+- `security_ref`
+- `spec_reference`
 - `objective`
 - `preconditions`
 - `request_method`
@@ -62,100 +252,259 @@ Use a table or spreadsheet-ready rows with these fields:
 - `expected_status`
 - `expected_response_or_assertion`
 - `coverage_type`
+- `assumption_or_open_question`
 - `audit_status`
 - `audit_notes`
 
-Use case ID prefixes:
+Defaults:
 
-- `LOGIN-GEN-001` for generated login cases.
-- `LOGIN-EXT-001` for manual login extensions.
-- `COUPON-GEN-001` for generated coupon cases.
-- `COUPON-EXT-001` for manual coupon extensions.
-- `ORDERSTATUS-GEN-001` for generated admin order-status cases.
-- `ORDERSTATUS-EXT-001` for manual admin order-status extensions.
+- `source = AI_GENERATED`
+- `audit_status = PENDING_HUMAN_REVIEW`
+
+Do not populate `audit_status` with a human-review decision.
+
+---
+
+## Case ID Conventions
+
+Use:
+
+- `LOGIN-GEN-001`
+- `COUPON-GEN-001`
+- `ORDERSTATUS-GEN-001`
+
+If the skill is reused for a different API, create a stable endpoint-specific prefix.
+
+Manual extension IDs are reserved for the human workflow:
+
+- `LOGIN-EXT-001`
+- `COUPON-EXT-001`
+- `ORDERSTATUS-EXT-001`
+
+This skill must not falsely label AI-generated cases as manual extensions.
+
+---
+
+## Traceability Rules
+
+Each case should reference the strongest available source:
+
+- feature/requirement ID
+- security requirement ID
+- API specification section
+- request field
+- response field
+- state/business rule
+
+Prefer traceability like:
+
+`Requirement -> Spec Rule -> Test Case`
+
+This supports later mapping to:
+
+`Test Case -> Postman Request -> Execution Result -> Bug`
+
+Do not invent requirement identifiers.
+
+---
 
 ## Coverage Heuristics
 
+The following are candidate ideas only.
+
+Always verify them against the API specification.
+
 ### Login
 
-Exercise:
+Possible dimensions:
 
-- Valid email and password.
-- Invalid email format, empty email, missing email, null email, wrong type email.
-- Wrong password, empty password, missing password, null password, wrong type password.
-- Non-existing account.
-- SQL injection and script-like payloads.
-- Case sensitivity and whitespace around credentials.
-- Lockout or rate-limit behavior if implemented.
-- JWT presence, user object shape, and sensitive field leakage.
+- valid credentials
+- malformed email
+- missing/empty/null/wrong-type email
+- wrong password
+- missing/empty/null/wrong-type password
+- non-existing account
+- whitespace behavior
+- case sensitivity
+- injection-style input
+- authentication response schema
+- token field if specified
+- sensitive-data leakage
+- account enumeration
+- lockout/rate limiting only if relevant
 
 ### Apply Coupon
 
-Exercise:
+Possible dimensions:
 
-- Valid coupon and correct final amount calculation.
-- Unknown coupon, expired coupon, lowercase coupon, whitespace, empty, missing, null, and wrong-type code.
-- `total_amount` as zero, negative, below minimum, exactly minimum, above minimum, decimal, huge number, string, missing, and null.
-- `user_id` valid, missing, null, wrong type, non-existing, and another user's ID.
-- Max uses per user.
-- SQL injection in coupon code.
-- Response schema: `discount_amount` and `final_amount`.
+- valid coupon
+- unknown coupon
+- expiration if supported
+- missing/empty/null/wrong-type coupon code
+- whitespace
+- case sensitivity as exploratory if unspecified
+- amount below/equal/above thresholds when defined
+- zero/negative/decimal/large/wrong-type amount
+- user identifier validation if present
+- per-user usage rules if defined
+- discount calculation
+- final amount calculation
+- injection-style code
+- response schema
 
 ### Admin Order Status
 
-Exercise:
+Possible dimensions:
 
-- Valid transitions: `pending -> confirmed -> shipping -> delivered`.
-- Invalid reverse transitions.
-- Invalid direct skips if business rules forbid them.
-- Transition after `delivered`.
-- Unknown status, empty status, missing status, null status, wrong type status.
-- Unknown order ID, negative ID, zero ID, string ID, and injection-style ID.
-- No token, malformed token, expired token, normal user token, and admin token.
-- Persisted state verification after update.
+- valid transitions defined by the specification
+- invalid reverse transition
+- invalid skip transition
+- terminal-state behavior
+- repeated transition
+- unknown/missing/empty/null/wrong-type status
+- invalid order ID
+- unknown order ID
+- unauthenticated request
+- malformed/expired/tampered token
+- normal-user authorization
+- admin authorization
+- role escalation attempt
+- persisted-state verification
 
-## Audit Rules
+---
 
-Label a generated case:
+## Expected Status Rules
 
-- `VALID` if it is aligned with the spec, executable, and has clear assertions.
-- `INVALID` if it contradicts the spec, requires unsupported fields, or expects impossible behavior.
-- `INCOMPLETE` if it lacks setup data, request details, expected status, or assertions.
+Only provide a concrete `expected_status` when:
 
-When fixing cases, keep the original test intent but update the request, preconditions, or expected assertions. If the spec is ambiguous, mark the assumption and design the case to reveal the implementation behavior.
+- the API specification defines it, or
+- the requirement unambiguously implies it.
 
-## Postman/Newman Guidance
+If the expected code is not defined:
 
-When producing Postman assets or instructions:
+- do not guess
+- use an exploratory expectation
+- state the unresolved behavior in `assumption_or_open_question`
 
-- Define `baseUrl` as `http://localhost:3000`.
-- Define `studentId` as `23127364`.
-- Add `X-Student-Id: {{studentId}}` to all requests.
-- Store login tokens in collection or environment variables.
-- Use setup requests for users, coupons, and orders when needed.
-- Use test scripts for HTTP status, response schema, business calculations, and persisted-state checks.
-- Use data-driven runs for boundary and negative partitions when practical.
+Example:
 
-Recommended Newman command:
+Instead of:
 
-```bash
-newman run postman/HW06_EShop_API_Tests.postman_collection.json \
-  -e postman/HW06_Local.postman_environment.json \
-  -r cli,html \
-  --reporter-html-export reports/newman/HW06_EShop_API_Tests.html
+`expected_status = 400`
+
+use:
+
+`expected_status = SPEC_UNDEFINED`
+
+with:
+
+`assumption_or_open_question = Exact error status is not specified; observe implementation and compare with course/security expectations.`
+
+---
+
+## Output Validation
+
+Before returning generated cases, verify:
+
+- case IDs are unique
+- the target API is correct
+- requests use only documented fields unless explicitly exploratory
+- security cases are relevant
+- expected statuses are justified
+- expected response fields exist in the spec
+- preconditions are explicit
+- state-dependent cases identify prerequisite states
+- generated cases are not mislabeled as human extensions
+- every generated case remains `PENDING_HUMAN_REVIEW`
+
+---
+
+## Export Guidance
+
+The preferred output is a structured table suitable for conversion to:
+
+- Markdown
+- CSV
+- Excel
+- Postman request definitions
+
+The skill may help create Postman-ready request data, but Postman execution is outside the core generator responsibility.
+
+Real execution belongs to the broader HW06 workflow controlled by `AGENT.md`.
+
+---
+
+## Human Audit Boundary
+
+After generation, stop at:
+
+`PENDING_HUMAN_REVIEW`
+
+The student must review each generated case and decide:
+
+- `VALID`
+- `INVALID`
+- `INCOMPLETE`
+
+The skill may later help explain or correct a case after the student's review, but it must not claim that its own judgment satisfies the assignment's human-review requirement.
+
+---
+
+## Demo Design
+
+A clear demonstration should show:
+
+1. Input API specification.
+2. Select one target endpoint.
+3. Extract endpoint rules.
+4. Show partitions/security/schema/state dimensions.
+5. Generate candidate cases.
+6. Export structured test cases.
+7. Show that all cases remain `PENDING_HUMAN_REVIEW`.
+
+Suggested conceptual pipeline:
+
+```text
+API Specification
+       |
+       v
+ Endpoint Parser
+       |
+       v
+ Rule Extractor
+       |
+       +--> Parameter Partitions
+       +--> Security Dimensions
+       +--> Schema Dimensions
+       +--> State Dimensions
+       |
+       v
+ Candidate Case Generator
+       |
+       v
+ Traceability Validator
+       |
+       v
+ Structured Test Cases
+       |
+       v
+ PENDING_HUMAN_REVIEW
 ```
 
-## Demo Generator Design
+The submitted diagram must comply with the assignment's requirement that the design diagram be self-drawn by the student.
 
-When drafting the Agent Skill or generator design section, describe a pipeline like this:
+---
 
-1. Parse API specification.
-2. Select target APIs from the assignment scope.
-3. Extract parameters, authentication requirements, response schemas, and business rules.
-4. Generate candidate cases from domain, boundary, security, schema, and state-transition strategies.
-5. Audit cases against the specification.
-6. Add manual extension cases for risks the generator missed.
-7. Export cases to Markdown, CSV/Excel, and Postman collection format.
-8. Execute with Newman and collect real evidence.
+## Output Quality Bar
 
-Keep the diagram and pseudocode honest: they may describe the designed generator, but real reports and screenshots must be produced by running the tests.
+A high-quality generated suite:
+
+- follows the actual specification
+- has clear traceability
+- covers meaningful partitions and risks
+- distinguishes requirements from assumptions
+- avoids invented expected behavior
+- contains executable request detail
+- exposes setup dependencies
+- does not fabricate execution results
+- stops before human-audit decisions
