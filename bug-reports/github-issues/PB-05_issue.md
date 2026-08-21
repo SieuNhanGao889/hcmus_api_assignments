@@ -1,6 +1,5 @@
 # Bản nháp GitHub Issue: Apply-coupon chấp nhận user_id dạng object và vẫn cấp giảm giá
 
-> Chỉ là bản nháp — chưa tạo GitHub Issue.
 
 **Mã bug:** PB-05  
 **Trạng thái:** CONFIRMED_BY_HUMAN_REVIEW  

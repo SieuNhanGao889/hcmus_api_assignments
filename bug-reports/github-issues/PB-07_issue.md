@@ -1,6 +1,5 @@
 # Bản nháp GitHub Issue: JWT của user thường có thể cập nhật trạng thái qua endpoint admin order
 
-> Chỉ là bản nháp — chưa tạo GitHub Issue.
 
 **Mã bug:** PB-07  
 **Trạng thái:** CONFIRMED_BY_HUMAN_REVIEW  

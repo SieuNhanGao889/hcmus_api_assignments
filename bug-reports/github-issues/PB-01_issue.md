@@ -1,7 +1,5 @@
 # Bản nháp GitHub Issue: `POST /api/login` làm lộ mật khẩu dạng rõ và các trường tài khoản nhạy cảm
 
-> Chỉ là bản nháp — chưa tạo GitHub Issue.
-
 **Mã bug:** PB-01  
 **Trạng thái:** CONFIRMED_BY_HUMAN_REVIEW  
 **Mức độ nghiêm trọng:** High  

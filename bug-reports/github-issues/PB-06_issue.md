@@ -1,6 +1,5 @@
 # Bản nháp GitHub Issue: Coupon phần trăm trả mức giảm âm và làm tăng final amount
 
-> Chỉ là bản nháp — chưa tạo GitHub Issue.
 
 **Mã bug:** PB-06  
 **Trạng thái:** CONFIRMED_BY_HUMAN_REVIEW  

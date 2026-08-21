@@ -1,6 +1,5 @@
 # Bản nháp GitHub Issue: Order đã canceled vẫn có thể chuyển sang delivered
 
-> Chỉ là bản nháp — chưa tạo GitHub Issue.
 
 **Mã bug:** PB-08  
 **Trạng thái:** CONFIRMED_BY_HUMAN_REVIEW  

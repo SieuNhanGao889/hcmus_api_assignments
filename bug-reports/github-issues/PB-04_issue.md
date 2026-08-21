@@ -1,6 +1,5 @@
 # Bản nháp GitHub Issue: Coupon từ chối tổng tiền bằng min_order_amount
 
-> Chỉ là bản nháp — chưa tạo GitHub Issue.
 
 **Mã bug:** PB-04  
 **Trạng thái:** CONFIRMED_BY_HUMAN_REVIEW  

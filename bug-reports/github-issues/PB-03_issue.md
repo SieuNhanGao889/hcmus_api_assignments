@@ -1,6 +1,5 @@
 # Bản nháp GitHub Issue: Tài khoản bị khóa sau hai lần đăng nhập sai thay vì ba lần
 
-> Chỉ là bản nháp — chưa tạo GitHub Issue.
 
 **Mã bug:** PB-03  
 **Trạng thái:** CONFIRMED_BY_HUMAN_REVIEW  

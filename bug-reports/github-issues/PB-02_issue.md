@@ -1,6 +1,5 @@
 # Bản nháp GitHub Issue: Lỗi request body làm lộ stack trace và đường dẫn tuyệt đối trên server
 
-> Chỉ là bản nháp — chưa tạo GitHub Issue.
 
 **Mã bug:** PB-02  
 **Trạng thái:** CONFIRMED_BY_HUMAN_REVIEW  
