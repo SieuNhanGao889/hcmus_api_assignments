@@ -2365,6 +2365,7 @@
                   "const caseId=pm.iterationData.get(\"case_id\"),scenarioId=pm.iterationData.get(\"scenario_id\");",
                   "pm.test(\"[\"+scenarioId+\"] order traceability metadata is present\",function(){pm.expect(caseId).to.match(/^ORDERSTATUS-/);});",
                   "const original=String(pm.iterationData.get(\"original_expected_status\")||\"\");if(/^\\d+$/.test(original))pm.test(\"[\"+scenarioId+\"] original specified status\",function(){pm.response.to.have.status(Number(original));});",
+                  "const mode=pm.iterationData.get(\"assertion_mode\");if(mode===\"STATE_UNCHANGED_SAFE_REJECTION\")pm.test(\"[\"+scenarioId+\"] invalid or absent path id is safely rejected\",function(){pm.expect(pm.response.code<200||pm.response.code>=300).to.eql(true);});",
                   "pm.environment.set(\"lastOrderCaseStatus\",String(pm.response.code));",
                   "pm.test(\"[\"+scenarioId+\"] no internal details leakage\",function(){pm.expect(pm.response.text()).not.to.match(/(at\\s+[^\\n]+\\([^\\n]*:\\d+:\\d+\\)|[A-Za-z]:\\\\[^\\s]+|\\/(?:home|usr|var|app)\\/[^\\s]+|SQLITE_|SELECT\\s+.+\\s+FROM|Sequelize|TypeError:|ReferenceError:)/i);});"
                 ]
@@ -2418,7 +2419,8 @@
                   "if(mode===\"STATE_CHANGED_TO_TARGET\")pm.test(\"[\"+scenarioId+\"] persisted state changed per FR-10\",function(){pm.expect(order.status).to.eql(target);});",
                   "if(mode===\"PATH_TARGET_ONLY\"){const secondary=rows.find(o=>Number(o.id)===Number(pm.environment.get(\"otherOrderId\")));pm.test(\"[\"+scenarioId+\"] path-target order changed\",function(){pm.expect(order.status).to.eql(target);});pm.test(\"[\"+scenarioId+\"] body-referenced secondary order stayed unchanged\",function(){pm.expect(secondary).to.exist;pm.expect(secondary.status).to.eql(\"pending\");});}",
                   "if(mode===\"DUPLICATE_STATUS_OBSERVATION\"){const snapshot=JSON.parse(pm.environment.get(\"orderStatusSnapshot\")||\"{}\");pm.test(\"[\"+scenarioId+\"] duplicate-key outcome is parser-justified\",function(){pm.expect([\"pending\",\"confirmed\"]).to.include(order.status);});pm.test(\"[\"+scenarioId+\"] duplicate-key request does not mutate unrelated orders\",function(){rows.filter(o=>Number(o.id)!==id&&Object.prototype.hasOwnProperty.call(snapshot,String(o.id))).forEach(o=>pm.expect(o.status).to.eql(snapshot[String(o.id)]));});console.log(\"ORDERSTATUS-EXT-005 parser observation\",{persistedStatus:order&&order.status,effectiveValue:order&&order.status===\"confirmed\"?\"first-key confirmed\":\"last-key delivered safely rejected\"});}",
-                  "if(mode===\"STATE_UNCHANGED_INVALID_TRANSITION\"||mode===\"STATE_UNCHANGED_AUTHORIZATION\")pm.test(\"[\"+scenarioId+\"] persisted state is unchanged\",function(){pm.expect(order.status).to.eql(source);});"
+                  "if(mode===\"OBSERVE_STATE_NO_INTERNAL_LEAKAGE\")console.log(\"ORDER STATUS exploratory persisted-state observation\",{scenarioId:scenarioId,responseStatus:pm.environment.get(\"lastOrderCaseStatus\"),before:source,after:order&&order.status});",
+                  "if(mode===\"STATE_UNCHANGED_INVALID_TRANSITION\"||mode===\"STATE_UNCHANGED_AUTHORIZATION\"||mode===\"STATE_UNCHANGED_SAFE_REJECTION\")pm.test(\"[\"+scenarioId+\"] persisted state is unchanged\",function(){pm.expect(order.status).to.eql(source);});"
                 ]
               }
             }

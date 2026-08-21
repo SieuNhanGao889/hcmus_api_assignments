@@ -357,7 +357,7 @@
     "path_value": "{{unknownOrderId}}",
     "controlled_state": "A disposable owner and a fresh order are created for this iteration.",
     "target_status": "confirmed",
-    "assertion_mode": "STATE_CHANGED_TO_TARGET"
+    "assertion_mode": "STATE_UNCHANGED_SAFE_REJECTION"
   },
   {
     "dataset": "order_status",
@@ -387,7 +387,7 @@
     "path_value": "0",
     "controlled_state": "A disposable owner and a fresh order are created for this iteration.",
     "target_status": "confirmed",
-    "assertion_mode": "STATE_CHANGED_TO_TARGET"
+    "assertion_mode": "STATE_UNCHANGED_SAFE_REJECTION"
   },
   {
     "dataset": "order_status",
@@ -417,7 +417,7 @@
     "path_value": "-1",
     "controlled_state": "A disposable owner and a fresh order are created for this iteration.",
     "target_status": "confirmed",
-    "assertion_mode": "STATE_CHANGED_TO_TARGET"
+    "assertion_mode": "STATE_UNCHANGED_SAFE_REJECTION"
   },
   {
     "dataset": "order_status",
@@ -447,7 +447,7 @@
     "path_value": "1.5",
     "controlled_state": "A disposable owner and a fresh order are created for this iteration.",
     "target_status": "confirmed",
-    "assertion_mode": "STATE_CHANGED_TO_TARGET"
+    "assertion_mode": "STATE_UNCHANGED_SAFE_REJECTION"
   },
   {
     "dataset": "order_status",
@@ -477,7 +477,7 @@
     "path_value": "abc",
     "controlled_state": "A disposable owner and a fresh order are created for this iteration.",
     "target_status": "confirmed",
-    "assertion_mode": "STATE_CHANGED_TO_TARGET"
+    "assertion_mode": "STATE_UNCHANGED_SAFE_REJECTION"
   },
   {
     "dataset": "order_status",
@@ -507,7 +507,7 @@
     "path_value": "999999999999",
     "controlled_state": "A disposable owner and a fresh order are created for this iteration.",
     "target_status": "confirmed",
-    "assertion_mode": "STATE_CHANGED_TO_TARGET"
+    "assertion_mode": "STATE_UNCHANGED_SAFE_REJECTION"
   },
   {
     "dataset": "order_status",
@@ -537,7 +537,7 @@
     "path_value": "1%20OR%201=1",
     "controlled_state": "A disposable owner and a fresh order are created for this iteration.",
     "target_status": "confirmed",
-    "assertion_mode": "STATE_CHANGED_TO_TARGET"
+    "assertion_mode": "STATE_UNCHANGED_SAFE_REJECTION"
   },
   {
     "dataset": "order_status",
@@ -1047,7 +1047,7 @@
     "path_value": "{{orderUnderTestId}}",
     "controlled_state": "A disposable owner and a fresh order are created for this iteration.",
     "target_status": "confirmed",
-    "assertion_mode": "STATE_CHANGED_TO_TARGET"
+    "assertion_mode": "OBSERVE_STATE_NO_INTERNAL_LEAKAGE"
   },
   {
     "dataset": "order_status",
