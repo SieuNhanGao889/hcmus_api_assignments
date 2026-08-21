@@ -1,0 +1,2 @@
+reports/newman/*.json filter=lfs diff=lfs merge=lfs -text
+reports/newman/html/*.html filter=lfs diff=lfs merge=lfs -text
