@@ -4,7 +4,7 @@
 
 - `api`: `POST /api/apply-coupon`
 - `phase`: preparation for `PHASE_5_HUMAN_EXTENSION`
-- `artifact`: `test-cases/coupon_extension_gaps.md`
+- `artifact`: `reports/analysis/coupon_extension_gaps.md`
 - `audited_suite`: `test-cases/coupon_test_cases_audited.xlsx`
 - `source_design`: `reports/analysis/coupon_test_design.md`
 - `student_id`: `23127364`

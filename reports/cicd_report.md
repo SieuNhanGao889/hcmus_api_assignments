@@ -25,14 +25,14 @@ Mọi Newman command dùng explicit `--folder`, nên data của một API không
 
 | Field | Evidence |
 |---|---|
-| Run | [EShop API tests #1](https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32445200879) |
+| Run | [EShop API tests #3](https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32447382046) |
 | Event | `push` |
 | Conclusion | `success` |
-| Commit | `a0adb735f70f48788cd7edefd7d11b32d7b4d74a` |
+| Commit | `c6bb21de39559396a8799132e3ef4a405fb820db` |
 | Smoke Newman step | `success` |
 | Artifact upload | `success` |
 | Screenshot | [`reports/screenshots/ci_success.png`](screenshots/ci_success.png) |
-| Link | https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32445200879 |
+
 
 Các field trên được đối chiếu từ GitHub Actions run/job API và screenshot thật trong repository.
 
@@ -48,16 +48,14 @@ Các field trên được đối chiếu từ GitHub Actions run/job API và scr
 | CI-only failure step | `failure` |
 | Artifact upload | `success` |
 | Screenshot | [`reports/screenshots/ci_intentional_failure.png`](screenshots/ci_intentional_failure.png) |
-| Link | https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32445604904   |
+
 
 Failure xảy ra tại step `Intentional CI-only failure after successful smoke execution`, sau khi smoke tests chạy bình thường và pass. Workflow không sửa SUT, data, credential hoặc assertion để tạo API failure giả.
+
+Hai sample runs dùng hai commit riêng: passing run dùng `c6bb21d...`, intentional failing run dùng `a0adb735...`.
 
 ## 5. Full-regression diagnostic
 
 `run_full_regression=true` chạy nguyên ba source data files với đúng folder và giữ failure thật. Newman aggregate status vẫn non-zero khi có assertion failure; `continue-on-error` chỉ làm job diagnostic không chặn smoke gate. Không dùng `--suppress-exit-code` và PB-01 đến PB-08 không bị suppress.
 
 Hai CI evidence runs hiện tại đều để diagnostic job ở trạng thái `skipped`; không claim đã có CI full-regression execution. Local full-regression evidence nằm trong `reports/newman/`.
-
-## 6. Remaining assignment action
-
-`TODO`: Đề bài yêu cầu “two sample commits”, nhưng hai run thật hiện cùng trỏ tới commit `a0adb735...`. Sinh viên cần tạo/ghi nhận hai commit riêng theo đúng wording của đề, hoặc có xác nhận của giảng viên rằng một commit với hai workflow modes được chấp nhận. Không thay URL/commit bằng dữ liệu giả.

@@ -87,6 +87,8 @@ Collection có bốn top-level folders, 43 requests, 44 pre-request event script
 
 Collection-level pre-request script upsert `X-Student-Id` từ environment cho mọi request. Mỗi request cũng khai báo header rõ ràng để tăng khả năng audit.
 
+Postman Console evidence: [postman_23127364_id_console.png](screenshots/postman_23127364_id_console.png) hiển thị log `X-Student-Id attached: 23127364` trong workspace thật.
+
 ## 7. Postman features thực sự đã dùng
 
 | Feature | Trạng thái | Evidence |
@@ -102,7 +104,7 @@ Collection-level pre-request script upsert `X-Student-Id` từ environment cho m
 | Data-driven Newman runs | `USED_AND_EVIDENCED` | Newman JSON reports có 46, 47 và 73 iterations. |
 | Dynamic variable extraction | `USED_AND_EVIDENCED` | Token và fixture IDs được lấy từ setup responses. |
 | Assertions | `USED_AND_EVIDENCED` | Newman reports và collection test scripts. |
-| Postman workspace | `USED_BUT_DOCUMENTATION_MISSING` nếu đã dùng GUI | Repository export không chứng minh workspace; sinh viên xác nhận hoặc đổi thành `NOT_USED`. |
+| Postman workspace | `USED_AND_EVIDENCED` | Screenshot Console hiển thị workspace, collection và environment thật. |
 | GUI Collection Runner | `USED_BUT_DOCUMENTATION_MISSING` nếu đã dùng | Execution có bằng chứng Newman; không có bằng chứng riêng cho GUI Runner. |
 | Monitor | `NOT_USED` | Không có monitor artifact/evidence. |
 | Mock server | `NOT_USED` | Không có mock artifact/evidence. |
@@ -160,11 +162,11 @@ Workflow: [api-tests.yml](../.github/workflows/api-tests.yml). Thiết kế chi 
 
 `smoke-gate` checkout repository và pinned SUT, setup Node.js, `npm ci`, cài Newman/HTMLExtra, start backend, poll readiness, rồi chạy một smoke row cho mỗi API với explicit `--folder`. JSON/HTML reports được upload bằng `always()`. Full regression vẫn có thể bật thủ công dưới dạng diagnostic/non-gating và không suppress confirmed-bug assertions.
 
-- Successful run: [#1](https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32445200879)
+- Successful run: [#3](https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32447382046), commit `c6bb21d...`
 - Intentional failed run: [#2](https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32445604904)
 - Screenshots: [ci_success.png](screenshots/ci_success.png), [ci_intentional_failure.png](screenshots/ci_intentional_failure.png)
 
-Run #2 xác nhận smoke Newman step thành công trước khi step `Intentional CI-only failure after successful smoke execution` fail. Cả hai run dùng cùng commit `a0adb735...`; yêu cầu literal “two sample commits” vẫn là TODO.
+Run #2 xác nhận smoke Newman step thành công trước khi step `Intentional CI-only failure after successful smoke execution` fail. Passing run #3 dùng commit `c6bb21d...`; intentional failing run #2 dùng commit `a0adb735...`, nên đã có hai sample commits riêng.
 
 ## 11. AI usage và trách nhiệm con người
 
@@ -172,7 +174,6 @@ Canonical AI audit: [ai_audit_report.md](ai_audit_report.md). AI critique: [ai_c
 
 AI hỗ trợ spec analysis, test design, candidate generation, correction theo quyết định human, Postman/CI implementation và đọc evidence. Sinh viên tự audit case, chọn extension, chạy Newman, xác nhận bug, tạo GitHub Issues, chạy CI và chụp evidence. AI audit không được viết lại lịch sử recommendation thành human decision.
 
-`TODO`: Sinh viên cập nhật AI audit cho các interaction còn thiếu hoặc sai path, thêm finalization interaction với timestamp thật, rồi regenerate `ai_audit_report.pdf`.
 
 ## 12. Hướng dẫn tái hiện
 
@@ -204,8 +205,7 @@ CI có thể chạy bằng `push` hoặc `workflow_dispatch`. `force_failure=tru
 
 | Deliverable | Vị trí |
 |---|---|
-| Main report | `reports/main_report.md` |
-| Final rubric/TODO | `reports/analysis/final_rubric_audit.md`, `reports/analysis/final_todo.md` |
+| Main report | `reports/main_report.md`, `reports/main_report.pdf` |
 | Audited test cases | `test-cases/*_audited.xlsx` |
 | Test summary | `test-cases/test_summary.md`, `README.md` |
 | Collection/environment/data | `postman/` |
@@ -220,29 +220,7 @@ CI có thể chạy bằng `push` hoặc `workflow_dispatch`. `force_failure=tru
 
 - Test unlock tự động sau 30 giây của login không được automation cover.
 - Inactive-coupon fixture không được tạo vì API/SUT không cung cấp cách hợp lệ để dựng `is_active=0`; không chỉnh database để manufacture setup.
-- Postman workspace và GUI Collection Runner không có repository evidence; không claim đã dùng.
+- Postman workspace và Console đã có screenshot evidence; GUI Collection Runner chưa có execution evidence nên không claim đã dùng.
 - Monitor và mock server không dùng.
 - Full-regression diagnostic mode đã được thiết kế trong GitHub Actions nhưng hai CI evidence runs hiện chỉ chạy smoke gate; local full regression có Newman evidence riêng.
-- X-Student-Id tồn tại trong collection và reports, nhưng console screenshot bắt buộc của pre-request script chưa thấy trong repository.
-
-## 15. Submission checklist
-
-| Mục | Trạng thái |
-|---|---|
-| Ba API, generation, audit, extension | COMPLETE |
-| Postman/Newman execution và HTML | COMPLETE |
-| Tám bug reports, Issues và screenshots | COMPLETE |
-| CI pass/fail runs, links và screenshots | COMPLETE |
-| Agent Skill, design, pseudocode và video | COMPLETE; diagram cần human confirmation |
-| AI critique 200–300 từ | Markdown COMPLETE; PDF cần regenerate để đồng bộ |
-| AI critique PDF đồng bộ | TODO |
-| X-Student-Id console screenshot | TODO |
-| AI audit final integrity và PDF refresh | TODO |
-| Hai sample commits riêng theo wording đề | TODO |
-| Main report PDF sau nội dung cuối | TODO |
-| README self-assessment | COMPLETE – sinh viên đã điền 100/100 |
-| Final commit log và ZIP đúng tên | TODO |
-
-## 16. Kết luận
-
-Repository có evidence thật cho toàn bộ pipeline kỹ thuật từ design đến CI/CD và tám confirmed bugs. Tuy nhiên bài nộp **chưa được xác nhận ready-to-submit** vì còn blocking TODO thủ công. Danh sách hành động ngắn nằm tại [final_todo.md](analysis/final_todo.md).
+- X-Student-Id tồn tại trong collection, reports và Postman Console screenshot.

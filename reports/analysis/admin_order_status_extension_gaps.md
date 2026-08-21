@@ -4,7 +4,7 @@
 
 - `api`: `PUT /api/admin/orders/:id/status`
 - `phase`: preparation for `PHASE_5_HUMAN_EXTENSION`
-- `artifact`: `test-cases/admin_order_status_extension_gaps.md`
+- `artifact`: `reports/analysis/admin_order_status_extension_gaps.md`
 - `audited_suite`: `test-cases/admin_order_status_test_cases_audited.xlsx`
 - `source_design`: `reports/analysis/admin_order_status_test_design.md`
 - `student_id`: `23127364`

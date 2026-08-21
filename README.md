@@ -6,8 +6,8 @@ Repository bài làm **HW06 – API Testing** cho EShop SUT.
 - Public repository: [SieuNhanGao889/hcmus_api_assignments](https://github.com/SieuNhanGao889/hcmus_api_assignments)
 - Base URL khi kiểm thử: `http://localhost:3000`
 - Công cụ: Postman, Newman, GitHub Actions và Codex/ChatGPT
-- Header bắt buộc: `X-Student-Id: 23127364`
 - Báo cáo chính: [reports/main_report.md](reports/main_report.md)
+- Demo video: [https://youtu.be/4fAWYhzeHzQ](https://youtu.be/4fAWYhzeHzQ)
 
 ## API đã chọn
 
@@ -58,15 +58,13 @@ Nguồn execution: [reports/newman/](reports/newman/) và [reports/analysis/newm
 | CI/CD | [.github/workflows/api-tests.yml](.github/workflows/api-tests.yml), [reports/cicd_report.md](reports/cicd_report.md), [reports/screenshots/](reports/screenshots/) |
 | Agent Skill | [agent-skill/SKILL.md](agent-skill/SKILL.md), [agent-skill/design/](agent-skill/design/), [demo video](https://youtu.be/4fAWYhzeHzQ) |
 | AI documentation | [reports/ai_audit_report.md](reports/ai_audit_report.md), [reports/ai_critique.md](reports/ai_critique.md) |
-| Final readiness | [reports/analysis/final_rubric_audit.md](reports/analysis/final_rubric_audit.md), [reports/analysis/final_todo.md](reports/analysis/final_todo.md) |
 
 ## CI/CD evidence
 
-- Successful run: [EShop API tests #1](https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32445200879)
+- Successful run: [EShop API tests #1](https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32447382046)
 - Intentional failed run: [EShop API tests #2](https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32445604904)
 - Screenshots: [ci_success.png](reports/screenshots/ci_success.png), [ci_intentional_failure.png](reports/screenshots/ci_intentional_failure.png)
 
-Hai run đều dùng commit `a0adb735f70f48788cd7edefd7d11b32d7b4d74a`; yêu cầu “two sample commits” của đề vẫn được ghi là TODO trong final rubric audit.
 
 ## Chạy Newman theo từng API
 
