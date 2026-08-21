@@ -1,126 +1,102 @@
 # 23127364_HW06_AI_API_100
 
-## Tổng quan dự án
-
-Repository này chứa các tài liệu nộp bài cho **HW06 - API Testing** trên hệ
-thống EShop SUT.
+Repository bài làm **HW06 – API Testing** cho EShop SUT.
 
 - MSSV: `23127364`
-- Base URL: `http://localhost:3000`
-- Tài liệu đặc tả API: `docs/api_specification.md`
-- Công cụ kiểm thử: Postman + Newman
-- Header bắt buộc khi thực thi: `X-Student-Id: 23127364`
+- Public repository: [SieuNhanGao889/hcmus_api_assignments](https://github.com/SieuNhanGao889/hcmus_api_assignments)
+- Base URL khi kiểm thử: `http://localhost:3000`
+- Công cụ: Postman, Newman, GitHub Actions và Codex/ChatGPT
+- Header bắt buộc: `X-Student-Id: 23127364`
+- Báo cáo chính: [reports/main_report.md](reports/main_report.md)
 
 ## API đã chọn
 
-| Pool | Chức năng | API đã chọn |
+| Pool | Chức năng | API |
 |---|---|---|
-| Pool A | Login | `POST /api/login` |
-| Pool B | Discount coupon / mã giảm giá | `POST /api/apply-coupon` |
-| Pool C | Admin order status / cập nhật trạng thái đơn hàng | `PUT /api/admin/orders/:id/status` |
+| A | Login / FR-02 | `POST /api/login` |
+| B | Apply Coupon / FR-09 | `POST /api/apply-coupon` |
+| C | Admin Order Status / FR-18 và FR-10 | `PUT /api/admin/orders/:id/status` |
 
-Bộ ba API này được chọn để tránh trùng với thành viên khác trong nhóm.
+`NEEDS_HUMAN_CONFIRMATION`: Sinh viên cần xác nhận ba API này không trùng đúng bộ ba API của thành viên khác trong nhóm.
 
-## Khai báo sử dụng AI
+## Test summary
 
-Trong bài tập này, AI được sử dụng như công cụ hỗ trợ trong quá trình làm bài.
-AI có thể hỗ trợ đọc nhanh tài liệu, tóm tắt ý chính, phân tích yêu cầu, gợi ý
-hướng kiểm thử, hỗ trợ soạn nháp báo cáo và rà soát nội dung ở mức tham khảo.
+### Thiết kế và human audit
 
-AI không tự động phê duyệt hoặc quyết định nội dung nộp cuối cùng. Mọi test
-case, kết quả thực thi, bug report, screenshot và bằng chứng CI/CD đều do sinh
-viên tự kiểm tra và chịu trách nhiệm. Chi tiết được ghi trong
-`reports/ai_audit_report.md`.
+| API | AI-generated | Manual extension | Tổng case thiết kế | `VALID` | `INCOMPLETE` đã có correction | `INVALID` |
+|---|---:|---:|---:|---:|---:|---:|
+| Login | 40 | 5 | 45 | 38 | 2 | 0 |
+| Apply Coupon | 40 | 5 | 45 | 36 | 4 | 0 |
+| Admin Order Status | 42 | 5 | 47 | 41 | 1 | 0 |
+| **Tổng** | **122** | **15** | **137** | **115** | **7** | **0** |
 
-## Cấu trúc thư mục
+Nguồn: ba workbook gốc và ba workbook audited trong [test-cases/](test-cases/). Tất cả bảy case `INCOMPLETE` đều có `audit_notes` và `human_correction`; quyết định audit thuộc về sinh viên.
 
-```text
-23127364_HW06_AI_API_100/
-|-- README.md
-|-- docs/
-|   |-- 2026.HW06.API Testing_En.md
-|   |-- 2026.HW06.API Testing_En.pdf
-|   `-- api_specification.md
-|-- test-cases/
-|   |-- login_test_cases.xlsx
-|   |-- coupon_test_cases.xlsx
-|   |-- admin_order_status_test_cases.xlsx
-|   `-- test_summary.md
-|-- postman/
-|   |-- HW06_EShop_API_Tests.postman_collection.json
-|   |-- HW06_Local.postman_environment.json
-|   `-- data/
-|       |-- login_data.json
-|       |-- coupon_data.json
-|       `-- order_status_data.json
-|-- reports/
-|   |-- analysis/
-|   |   |-- login_test_design.md
-|   |   |-- coupon_test_design.md
-|   |   `-- admin_order_status_test_design.md
-|   |-- main_report.md
-|   |-- main_report.pdf
-|   |-- ai_audit_report.md
-|   |-- ai_audit_report.pdf
-|   |-- ai_critique.md
-|   |-- cicd_report.md
-|   `-- newman/
-|       `-- HW06_EShop_API_Tests.html
-|-- bug-reports/
-|   |-- bugs_summary.md
-|   `-- screenshots/
-|-- agent-skill/
-|   |-- SKILL.md
-|   |-- design/
-|   |   |-- design.md
-|   |   |-- pseudocode.md
-|   |   `-- diagram.png
-|   |-- scripts/
-|   |   `-- generate_api_tests.py
-|   `-- demo/
-|       `-- demo_notes.md
-|-- evidence/
-|   |-- postman/
-|   |-- newman/
-|   |-- bugs/
-|   `-- cicd/
-|       |-- passing-run/
-|       `-- failing-run/
-|-- .github/
-|   `-- workflows/
-|       `-- api-tests.yml
-`-- git-log/
-    `-- commit_log.txt
-```
+### Execution cuối sau automation correction
 
-## Chạy Newman
+Một designed case có thể mở rộng thành nhiều `scenario_id`, nên số scenario execution lớn hơn số case thiết kế.
+
+| API | Scenario rows executed | Passed | Failed | Assertions passed | Assertions failed | Confirmed bugs liên quan |
+|---|---:|---:|---:|---:|---:|---:|
+| Login | 46 | 35 | 11 | 142 | 11 | PB-01, PB-02, PB-03 |
+| Apply Coupon | 47 | 43 | 4 | 833 | 4 | PB-04, PB-05, PB-06 |
+| Admin Order Status (rerun) | 73 | 66 | 7 | 785 | 7 | PB-02, PB-07, PB-08 |
+| **Tổng** | **166** | **144** | **22** | **1,760** | **22** | **8 unique bugs** |
+
+Nguồn execution: [reports/newman/](reports/newman/) và [reports/analysis/newman_execution_analysis.md](reports/analysis/newman_execution_analysis.md). `PB-02` ảnh hưởng hai API nên tổng số ánh xạ theo API là 9 nhưng chỉ có 8 nguyên nhân lỗi độc lập.
+
+## Điều hướng artifact
+
+| Nhóm | Artifact chính |
+|---|---|
+| Assignment và API spec | [docs/2026.HW06.API Testing_En.md](docs/2026.HW06.API%20Testing_En.md), [docs/api_specification.md](docs/api_specification.md) |
+| Test cases | [test-cases/](test-cases/), [test-cases/test_summary.md](test-cases/test_summary.md) |
+| Postman | [postman/HW06_EShop_API_Tests.postman_collection.json](postman/HW06_EShop_API_Tests.postman_collection.json), [postman/HW06_Local.postman_environment.json](postman/HW06_Local.postman_environment.json), [postman/data/](postman/data/) |
+| Newman evidence | [reports/newman/](reports/newman/) |
+| Execution analysis | [reports/analysis/newman_execution_analysis.md](reports/analysis/newman_execution_analysis.md), [reports/analysis/order_status_automation_fix_review.md](reports/analysis/order_status_automation_fix_review.md) |
+| Bug reports | [bug-reports/bugs_summary.md](bug-reports/bugs_summary.md), [bug-reports/PB-01.md](bug-reports/PB-01.md) đến [bug-reports/PB-08.md](bug-reports/PB-08.md) |
+| CI/CD | [.github/workflows/api-tests.yml](.github/workflows/api-tests.yml), [reports/cicd_report.md](reports/cicd_report.md), [reports/screenshots/](reports/screenshots/) |
+| Agent Skill | [agent-skill/SKILL.md](agent-skill/SKILL.md), [agent-skill/design/](agent-skill/design/), [demo video](https://youtu.be/4fAWYhzeHzQ) |
+| AI documentation | [reports/ai_audit_report.md](reports/ai_audit_report.md), [reports/ai_critique.md](reports/ai_critique.md) |
+| Final readiness | [reports/analysis/final_rubric_audit.md](reports/analysis/final_rubric_audit.md), [reports/analysis/final_todo.md](reports/analysis/final_todo.md) |
+
+## CI/CD evidence
+
+- Successful run: [EShop API tests #1](https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32445200879)
+- Intentional failed run: [EShop API tests #2](https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32445604904)
+- Screenshots: [ci_success.png](reports/screenshots/ci_success.png), [ci_intentional_failure.png](reports/screenshots/ci_intentional_failure.png)
+
+Hai run đều dùng commit `a0adb735f70f48788cd7edefd7d11b32d7b4d74a`; yêu cầu “two sample commits” của đề vẫn được ghi là TODO trong final rubric audit.
+
+## Chạy Newman theo từng API
+
+Backend EShop phải chạy liên tục tại `http://localhost:3000` trong toàn bộ session.
 
 ```bash
 newman run postman/HW06_EShop_API_Tests.postman_collection.json \
-  -e postman/HW06_Local.postman_environment.json \
-  -r cli,html \
-  --reporter-html-export reports/newman/HW06_EShop_API_Tests.html
+  --environment postman/HW06_Local.postman_environment.json \
+  --folder "01 - POST Login - Data Run" \
+  --iteration-data postman/data/login_data.json
+
+newman run postman/HW06_EShop_API_Tests.postman_collection.json \
+  --environment postman/HW06_Local.postman_environment.json \
+  --folder "02 - POST Apply Coupon - Data Run" \
+  --iteration-data postman/data/coupon_data.json
+
+newman run postman/HW06_EShop_API_Tests.postman_collection.json \
+  --environment postman/HW06_Local.postman_environment.json \
+  --folder "03 - PUT Admin Order Status - Data Run" \
+  --iteration-data postman/data/order_status_data.json
 ```
 
-## Danh sách tài liệu nộp
-
-- Báo cáo chính: Markdown và PDF
-- Báo cáo AI audit: Markdown và PDF
-- AI critique: 200-300 từ
-- File Excel test case và test summary
-- Postman collection, environment và data files
-- Newman HTML report
-- Bug report và screenshot minh chứng
-- Báo cáo CI/CD và bằng chứng cho một lần chạy pass, một lần chạy fail
-- AI-driven Agent Skill, generator script, design, diagram, pseudocode và demo notes
-- Git commit log
+Các command trên là hướng dẫn tái hiện khớp collection hiện tại; kết quả đã nộp nằm trong `reports/newman/`.
 
 ## Tự đánh giá
 
-| STT | Tiêu chí | Điểm | Điểm tự đánh giá |
-|---|---:|---:|---:|
-| 1 | API1 - đầy đủ pipeline: generate, audit, extend, execute, bugs | 30 | |
-| 2 | API2 - đầy đủ pipeline: generate, audit, extend, execute, bugs | 30 | |
-| 3 | API3 - đầy đủ pipeline: generate, audit, extend, execute, bugs | 30 | |
-| 4 | Agent Skill - AI-driven test generator | 10 | |
-| | Tổng | 100 | |
+| STT | Tiêu chí | Điểm tối đa | Điểm tự đánh giá |
+|---|---|---:|---:|
+| 1 | API 1 – full pipeline | 30 | `30` |
+| 2 | API 2 – full pipeline | 30 | `30` |
+| 3 | API 3 – full pipeline | 30 | `30` |
+| 4 | Agent Skill – AI-driven test generator | 10 | `10` |
+| | **Tổng** | **100** | **`100`** |

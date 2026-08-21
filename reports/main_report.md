@@ -1,248 +1,248 @@
-# HW06 - API Testing Report
+# Báo cáo HW06 – API Testing
 
-- MSSV: `23127364`
-- SUT: EShop API
-- Base URL dự kiến: `http://localhost:3000`
-- Header bắt buộc khi thực thi: `X-Student-Id: 23127364`
-- API đã chọn: `POST /api/login`, `POST /api/apply-coupon`, `PUT /api/admin/orders/:id/status`
+## 1. Thông tin bài làm
 
-## 1. Introduction
-
-Bài làm này áp dụng quy trình kiểm thử API theo hướng AI-assisted nhưng vẫn giữ vai trò quyết định của sinh viên. AI được dùng để đọc đặc tả, phân tích tham số, thiết kế hướng kiểm thử và sinh candidate test cases. Sau đó sinh viên thực hiện human audit, chọn các khoảng trống coverage còn lại và bổ sung manual extension cases.
-
-Phạm vi hiện tại đã hoàn thành đến `PHASE_5_HUMAN_EXTENSION` cho cả 3 API. Chưa có thực thi Postman/Newman, chưa có evidence chạy test, chưa có bug được xác nhận và chưa có CI/CD run thật.
-
-## 2. Test Environment and Tools
-
-| Thành phần | Giá trị |
+| Mục | Giá trị |
 |---|---|
-| API specification | `docs/api_specification.md` |
-| Assignment description | `docs/2026.HW06.API Testing_En.md` |
-| Test case format | Excel workbook `.xlsx` |
-| AI workflow artifact | `reports/ai_audit_report.md` |
-| Agent Skill | `agent-skill/SKILL.md` |
-| Planned API tool | Postman + Newman |
-| Execution status | Chưa thực hiện |
+| MSSV | `23127364` |
+| SUT | EShop API |
+| Public repository | [SieuNhanGao889/hcmus_api_assignments](https://github.com/SieuNhanGao889/hcmus_api_assignments) |
+| Base URL khi thực thi | `http://localhost:3000` |
+| Header bắt buộc | `X-Student-Id: 23127364` |
+| Công cụ | Postman, Newman, GitHub Actions, Codex/ChatGPT |
 
-Các request plan trong test cases được thiết kế để sau này chuyển sang Postman/Newman và luôn cần header `X-Student-Id: 23127364`.
+Bài làm áp dụng quy trình AI-first theo từng bước: phân tích đặc tả, thiết kế coverage, sinh candidate cases, human audit, manual extension, Postman implementation, execution, phân tích failure, human confirmation, automation correction, rerun và CI/CD. AI hỗ trợ phân tích và soạn artifact; sinh viên chịu trách nhiệm audit, execution, bug confirmation và bằng chứng cuối.
 
-## 3. API Selection
+## 2. API đã chọn
 
-| Pool | API | Lý do chọn |
+| Pool | API | Lý do kiểm thử |
 |---|---|---|
-| Pool A | `POST /api/login` | API xác thực quan trọng, có rủi ro credential handling, token, schema và account enumeration. |
-| Pool B | `POST /api/apply-coupon` | API nghiệp vụ tính tiền, có rủi ro boundary, discount formula, usage limit và client-side override. |
-| Pool C | `PUT /api/admin/orders/:id/status` | API admin nhạy cảm, có rủi ro authorization, role escalation, state transition và persisted-state integrity. |
+| A | `POST /api/login` | Authentication, credential handling, lockout, token và information leakage. |
+| B | `POST /api/apply-coupon` | Boundary, discount formula, usage rule, type validation và business-rule integrity. |
+| C | `PUT /api/admin/orders/:id/status` | Admin authorization, state transition và persisted-state integrity. |
 
-## 4. API 1 - Login
+`NEEDS_HUMAN_CONFIRMATION`: Việc bộ ba API không trùng với thành viên khác trong nhóm không thể xác minh chỉ từ repository.
 
-### 4.1 API Analysis
+## 3. AI-first test design
 
-Artifact phân tích: `reports/analysis/login_spec_analysis.md`.
+Mỗi API có artifact phân tích spec và test design riêng:
 
-`POST /api/login` nhận body JSON gồm `email` và `password`. Theo đặc tả, response thành công `200 OK` trả về `token` dạng JWT và thông tin `user`. Đặc tả không nêu rõ error schema, status code cho credential sai, token claims, lockout threshold hoặc behavior với whitespace/case sensitivity.
+| API | Spec analysis | Test design |
+|---|---|---|
+| Login | [login_spec_analysis.md](analysis/login_spec_analysis.md) | [login_test_design.md](analysis/login_test_design.md) |
+| Apply Coupon | [coupon_spec_analysis.md](analysis/coupon_spec_analysis.md) | [coupon_test_design.md](analysis/coupon_test_design.md) |
+| Admin Order Status | [admin_order_status_spec_analysis.md](analysis/admin_order_status_spec_analysis.md) | [admin_order_status_test_design.md](analysis/admin_order_status_test_design.md) |
 
-### 4.2 AI-Assisted Test Generation
+Coverage gồm domain partitions, missing/empty/null/wrong-type, boundary, schema, security, parser robustness, authorization và state behavior. Các điểm đặc tả chưa đủ rõ được giữ là `SPEC_UNDEFINED` hoặc exploratory thay vì tự tạo expected behavior.
 
-Artifact thiết kế: `reports/analysis/login_test_design.md`.
+## 4. Agent Skill và demo
 
-File AI-generated: `test-cases/login_test_cases.xlsx`.
+Reusable Agent Skill tại [agent-skill/SKILL.md](../agent-skill/SKILL.md) nhận API specification và target endpoint, sau đó thực hiện:
 
-AI đã sinh `40` candidate test cases với `source = AI_GENERATED` và `audit_status = PENDING_HUMAN_REVIEW`. Coverage chính gồm happy path, invalid credential, missing/empty/null/wrong-type fields, malformed email, whitespace/case behavior, injection-style inputs, schema checks, sensitive-data leakage, malformed JSON và exploratory lockout/rate-limit.
+`Specification Reader -> Rule Extractor -> Test Dimensions -> Candidate Generator -> Traceability Validator -> PENDING_HUMAN_REVIEW`
 
-### 4.3 Human Audit
+Skill không tự quyết định `VALID`, `INVALID`, `INCOMPLETE`, không tự tạo manual extension và không tạo execution evidence.
 
-File audited: `test-cases/login_test_cases_audited.xlsx`.
+Artifact:
 
-Kết quả human audit:
+- Thiết kế: [design.md](../agent-skill/design/design.md)
+- Pseudocode: [pseudocode.md](../agent-skill/design/pseudocode.md)
+- Diagram: [diagram.png](../agent-skill/design/diagram.png)
+- Demo prompt: [prompt-demo.md](../agent-skill/demo/prompt-demo.md)
+- Video thật: [CSC13102_23KTPM1_23127364_HW6](https://youtu.be/4fAWYhzeHzQ)
 
-| Audit status | Số lượng |
-|---|---:|
-| `VALID` | `38` |
-| `INCOMPLETE` | `2` |
-| `INVALID` | `0` |
+`NEEDS_HUMAN_CONFIRMATION`: Sinh viên phải xác nhận diagram cuối là self-drawn theo anti-AI constraint và chỉnh AI audit nếu câu chữ hiện tại có thể bị hiểu là AI tạo diagram.
 
-Hai case `LOGIN-GEN-002` và `LOGIN-GEN-040` giữ nguyên nội dung AI gốc, đồng thời ghi correction được duyệt trong `human_correction`.
+## 5. Test-case generation, human audit và extension
 
-### 4.4 Human Extension
+### 5.1 Số lượng
 
-Sinh viên chọn và bổ sung đúng `5` manual extension cases:
+| API | AI-generated | Manual extension | Tổng | `VALID` | `INCOMPLETE` | `INVALID` |
+|---|---:|---:|---:|---:|---:|---:|
+| Login | 40 | 5 | 45 | 38 | 2 | 0 |
+| Apply Coupon | 40 | 5 | 45 | 36 | 4 | 0 |
+| Admin Order Status | 42 | 5 | 47 | 41 | 1 | 0 |
+| **Tổng** | **122** | **15** | **137** | **115** | **7** | **0** |
 
-| Case ID | Ý tưởng |
+Nguồn: sáu workbook trong [test-cases/](../test-cases/). Workbook gốc giữ `PENDING_HUMAN_REVIEW`; workbook audited giữ quyết định của sinh viên. Bảy case `INCOMPLETE` đều có reasoning trong `audit_notes` và correction trong `human_correction`.
+
+### 5.2 Manual extensions
+
+Mỗi API có đúng năm extension với `source = MANUAL_EXTENSION`. Các gap nổi bật gồm token usability qua nhiều request, duplicate JSON keys, công thức coupon với controlled fixture, persisted-state verification sau authorization failure và ma trận state transition. Lý do AI bỏ sót/gợi ý coverage được ghi tại:
+
+- [login_extension_gaps.md](analysis/login_extension_gaps.md)
+- [coupon_extension_gaps.md](analysis/coupon_extension_gaps.md)
+- [admin_order_status_extension_gaps.md](analysis/admin_order_status_extension_gaps.md)
+
+## 6. Postman implementation
+
+Artifact chính:
+
+- Collection: [HW06_EShop_API_Tests.postman_collection.json](../postman/HW06_EShop_API_Tests.postman_collection.json)
+- Environment: [HW06_Local.postman_environment.json](../postman/HW06_Local.postman_environment.json)
+- External data: [postman/data/](../postman/data/)
+- Implementation notes: [postman_implementation_notes.md](analysis/postman_implementation_notes.md)
+
+Collection có bốn top-level folders, 43 requests, 44 pre-request event scripts (gồm collection-level script) và 43 post-response/test scripts. Mỗi iteration dựng disposable fixture, thực hiện CASE/SEQUENCE, trích xuất token/ID động, xác minh kết quả và cleanup khi áp dụng. Token, user ID, coupon ID và order ID không được hard-code trong repository.
+
+Collection-level pre-request script upsert `X-Student-Id` từ environment cho mọi request. Mỗi request cũng khai báo header rõ ràng để tăng khả năng audit.
+
+## 7. Postman features thực sự đã dùng
+
+| Feature | Trạng thái | Evidence |
+|---|---|---|
+| Collection | `USED_AND_EVIDENCED` | Collection JSON hiện có. |
+| Folders | `USED_AND_EVIDENCED` | Ba folder API và một folder deferred. |
+| Requests | `USED_AND_EVIDENCED` | 43 request definitions. |
+| Pre-request scripts | `USED_AND_EVIDENCED` | Header injection, runtime generation và flow guards. |
+| Post-response/test scripts | `USED_AND_EVIDENCED` | Status, schema, business, security và persisted-state assertions. |
+| Collection variables | `USED_AND_EVIDENCED` | Bốn collection variables. |
+| Environment variables | `USED_AND_EVIDENCED` | 30 environment entries, gồm base URL, student ID và runtime placeholders. |
+| External JSON data | `USED_AND_EVIDENCED` | Ba source dataset và ba CI smoke dataset. |
+| Data-driven Newman runs | `USED_AND_EVIDENCED` | Newman JSON reports có 46, 47 và 73 iterations. |
+| Dynamic variable extraction | `USED_AND_EVIDENCED` | Token và fixture IDs được lấy từ setup responses. |
+| Assertions | `USED_AND_EVIDENCED` | Newman reports và collection test scripts. |
+| Postman workspace | `USED_BUT_DOCUMENTATION_MISSING` nếu đã dùng GUI | Repository export không chứng minh workspace; sinh viên xác nhận hoặc đổi thành `NOT_USED`. |
+| GUI Collection Runner | `USED_BUT_DOCUMENTATION_MISSING` nếu đã dùng | Execution có bằng chứng Newman; không có bằng chứng riêng cho GUI Runner. |
+| Monitor | `NOT_USED` | Không có monitor artifact/evidence. |
+| Mock server | `NOT_USED` | Không có mock artifact/evidence. |
+
+Monitor và mock server là ví dụ “as many as reasonably can”, không phải deliverable bắt buộc. Báo cáo không claim các feature này đã dùng.
+
+## 8. Newman execution
+
+### 8.1 Kết quả ban đầu
+
+| API | Iterations | Requests | Assertions | Passed assertions | Failed assertions |
+|---|---:|---:|---:|---:|---:|
+| Login | 46 | 101 | 153 | 142 | 11 |
+| Apply Coupon | 47 | 755 | 837 | 833 | 4 |
+| Admin Order Status ban đầu | 73 | 638 | 786 | 771 | 15 |
+| **Tổng ban đầu** | **166** | **1,494** | **1,776** | **1,746** | **30** |
+
+Phân tích tại [newman_execution_analysis.md](analysis/newman_execution_analysis.md) phân loại 22 failed assertions thành tám potential SUT root causes và tám failed assertions thành hai automation root causes, không coi mọi assertion failure là bug riêng.
+
+### 8.2 Human review, correction và rerun
+
+Sinh viên xác nhận PB-01 đến PB-08 và phê duyệt correction cho AF-01/AF-02. Collection chỉ sửa assertion mode bị sai; các assertion chứng minh confirmed bug được giữ nguyên. Rerun Order Status có 792 assertions, 785 pass và 7 fail; bảy failure còn lại map tới PB-02, PB-07 và PB-08.
+
+Final scenario-level view sau correction:
+
+| API | Scenario rows | Passed rows | Failed rows |
+|---|---:|---:|---:|
+| Login | 46 | 35 | 11 |
+| Apply Coupon | 47 | 43 | 4 |
+| Admin Order Status rerun | 73 | 66 | 7 |
+| **Tổng** | **166** | **144** | **22** |
+
+Raw JSON và HTML evidence nằm tại [reports/newman/](newman/). Order Status rerun có JSON riêng; HTML hiện có là report của execution đã lưu trước đó.
+
+## 9. Bug analysis và GitHub Issues
+
+Có tám root causes được `CONFIRMED_BY_HUMAN_REVIEW`. Không nhân số bug theo số assertion failure.
+
+| Bug | Severity | Endpoint | GitHub Issue |
+|---|---|---|---|
+| PB-01 | HIGH | Login | [#1](https://github.com/SieuNhanGao889/hcmus_api_assignments/issues/1) |
+| PB-02 | HIGH | Login, Order Status | [#2](https://github.com/SieuNhanGao889/hcmus_api_assignments/issues/2) |
+| PB-03 | MEDIUM | Login | [#3](https://github.com/SieuNhanGao889/hcmus_api_assignments/issues/3) |
+| PB-04 | MEDIUM | Apply Coupon | [#4](https://github.com/SieuNhanGao889/hcmus_api_assignments/issues/4) |
+| PB-05 | HIGH | Apply Coupon | [#5](https://github.com/SieuNhanGao889/hcmus_api_assignments/issues/5) |
+| PB-06 | HIGH | Apply Coupon | [#6](https://github.com/SieuNhanGao889/hcmus_api_assignments/issues/6) |
+| PB-07 | CRITICAL | Admin Order Status | [#7](https://github.com/SieuNhanGao889/hcmus_api_assignments/issues/7) |
+| PB-08 | HIGH | Admin Order Status | [#8](https://github.com/SieuNhanGao889/hcmus_api_assignments/issues/8) |
+
+Canonical details và ảnh: [bugs_summary.md](../bug-reports/bugs_summary.md), [PB-01.md](../bug-reports/PB-01.md) đến [PB-08.md](../bug-reports/PB-08.md), [bug-reports/screenshots/](../bug-reports/screenshots/). Live GitHub Issue bodies chứa image attachment syntax khi static audit đối chiếu.
+
+## 10. CI/CD
+
+Workflow: [api-tests.yml](../.github/workflows/api-tests.yml). Thiết kế chi tiết: [cicd_design_review.md](analysis/cicd_design_review.md). Báo cáo run: [cicd_report.md](cicd_report.md).
+
+`smoke-gate` checkout repository và pinned SUT, setup Node.js, `npm ci`, cài Newman/HTMLExtra, start backend, poll readiness, rồi chạy một smoke row cho mỗi API với explicit `--folder`. JSON/HTML reports được upload bằng `always()`. Full regression vẫn có thể bật thủ công dưới dạng diagnostic/non-gating và không suppress confirmed-bug assertions.
+
+- Successful run: [#1](https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32445200879)
+- Intentional failed run: [#2](https://github.com/SieuNhanGao889/hcmus_api_assignments/actions/runs/32445604904)
+- Screenshots: [ci_success.png](screenshots/ci_success.png), [ci_intentional_failure.png](screenshots/ci_intentional_failure.png)
+
+Run #2 xác nhận smoke Newman step thành công trước khi step `Intentional CI-only failure after successful smoke execution` fail. Cả hai run dùng cùng commit `a0adb735...`; yêu cầu literal “two sample commits” vẫn là TODO.
+
+## 11. AI usage và trách nhiệm con người
+
+Canonical AI audit: [ai_audit_report.md](ai_audit_report.md). AI critique: [ai_critique.md](ai_critique.md).
+
+AI hỗ trợ spec analysis, test design, candidate generation, correction theo quyết định human, Postman/CI implementation và đọc evidence. Sinh viên tự audit case, chọn extension, chạy Newman, xác nhận bug, tạo GitHub Issues, chạy CI và chụp evidence. AI audit không được viết lại lịch sử recommendation thành human decision.
+
+`TODO`: Sinh viên cập nhật AI audit cho các interaction còn thiếu hoặc sai path, thêm finalization interaction với timestamp thật, rồi regenerate `ai_audit_report.pdf`.
+
+## 12. Hướng dẫn tái hiện
+
+Giữ backend EShop chạy liên tục tại port `3000`, sau đó chạy từng folder với đúng data file:
+
+```bash
+newman run postman/HW06_EShop_API_Tests.postman_collection.json \
+  --environment postman/HW06_Local.postman_environment.json \
+  --folder "01 - POST Login - Data Run" \
+  --iteration-data postman/data/login_data.json \
+  --reporters cli,json,htmlextra
+
+newman run postman/HW06_EShop_API_Tests.postman_collection.json \
+  --environment postman/HW06_Local.postman_environment.json \
+  --folder "02 - POST Apply Coupon - Data Run" \
+  --iteration-data postman/data/coupon_data.json \
+  --reporters cli,json,htmlextra
+
+newman run postman/HW06_EShop_API_Tests.postman_collection.json \
+  --environment postman/HW06_Local.postman_environment.json \
+  --folder "03 - PUT Admin Order Status - Data Run" \
+  --iteration-data postman/data/order_status_data.json \
+  --reporters cli,json,htmlextra
+```
+
+CI có thể chạy bằng `push` hoặc `workflow_dispatch`. `force_failure=true` chỉ tạo failure sau khi smoke pass; `run_full_regression=true` bật diagnostic suite.
+
+## 13. Artifact index
+
+| Deliverable | Vị trí |
 |---|---|
-| `LOGIN-EXT-001` | Cross-request token usability |
-| `LOGIN-EXT-002` | Token/user consistency |
-| `LOGIN-EXT-003` | Duplicate JSON keys |
-| `LOGIN-EXT-004` | Paired account enumeration observation |
-| `LOGIN-EXT-005` | HTTP parser error leakage |
+| Main report | `reports/main_report.md` |
+| Final rubric/TODO | `reports/analysis/final_rubric_audit.md`, `reports/analysis/final_todo.md` |
+| Audited test cases | `test-cases/*_audited.xlsx` |
+| Test summary | `test-cases/test_summary.md`, `README.md` |
+| Collection/environment/data | `postman/` |
+| Newman JSON/HTML | `reports/newman/` |
+| Bug reports/issues/screenshots | `bug-reports/` |
+| CI workflow/report/screenshots | `.github/workflows/api-tests.yml`, `reports/cicd_report.md`, `reports/screenshots/` |
+| Agent Skill/design/demo | `agent-skill/` |
+| AI audit/critique | `reports/ai_audit_report.md`, `reports/ai_critique.md` |
+| Commit log | `git-log/commit_log.txt` sau khi sinh viên refresh ở commit cuối |
 
-Các case này có `source = MANUAL_EXTENSION` và được tách khỏi AI-generated baseline.
+## 14. Known limitations và deferred items
 
-### 4.5 Test Execution
+- Test unlock tự động sau 30 giây của login không được automation cover.
+- Inactive-coupon fixture không được tạo vì API/SUT không cung cấp cách hợp lệ để dựng `is_active=0`; không chỉnh database để manufacture setup.
+- Postman workspace và GUI Collection Runner không có repository evidence; không claim đã dùng.
+- Monitor và mock server không dùng.
+- Full-regression diagnostic mode đã được thiết kế trong GitHub Actions nhưng hai CI evidence runs hiện chỉ chạy smoke gate; local full regression có Newman evidence riêng.
+- X-Student-Id tồn tại trong collection và reports, nhưng console screenshot bắt buộc của pre-request script chưa thấy trong repository.
 
-Chưa thực hiện. Chưa có Postman collection, Newman HTML report hoặc execution evidence thật cho Login trong repo tại thời điểm viết báo cáo này.
+## 15. Submission checklist
 
-### 4.6 Findings and Bugs
-
-Chưa ghi nhận bug confirmed vì chưa chạy test và chưa reproduce behavior thực tế so với đặc tả.
-
-## 5. API 2 - Coupon
-
-### 5.1 API Analysis
-
-Artifact phân tích: `reports/analysis/coupon_spec_analysis.md`.
-
-`POST /api/apply-coupon` nhận body JSON gồm `code`, `total_amount`, `user_id`. Đặc tả mô tả API tính tổng tiền sau giảm và trả JSON có `discount_amount`, `final_amount`. Đặc tả chưa nói rõ status code lỗi, công thức rounding, authentication requirement cho `user_id`, hoặc việc usage limit có được persist khi apply coupon hay không.
-
-### 5.2 AI-Assisted Test Generation
-
-Artifact thiết kế: `reports/analysis/coupon_test_design.md`.
-
-File AI-generated: `test-cases/coupon_test_cases.xlsx`.
-
-AI đã sinh `40` candidate test cases với coverage về valid coupon, unknown/empty/null/wrong-type code, amount boundaries, user identifier, expired/min-order/usage-limit exploratory behavior, injection-style input, extra fields, malformed JSON và response schema.
-
-### 5.3 Human Audit
-
-File audited: `test-cases/coupon_test_cases_audited.xlsx`.
-
-Kết quả human audit:
-
-| Audit status | Số lượng |
-|---|---:|
-| `VALID` | `36` |
-| `INCOMPLETE` | `4` |
-| `INVALID` | `0` |
-
-Các case `INCOMPLETE` chủ yếu phụ thuộc fixture hoặc state chưa được đặc tả rõ như `min_order_amount`, `max_uses_per_user` và cross-user behavior.
-
-### 5.4 Human Extension
-
-Sinh viên chọn và bổ sung đúng `5` manual extension cases:
-
-| Case ID | Ý tưởng |
+| Mục | Trạng thái |
 |---|---|
-| `COUPON-EXT-001` | Discount formula with controlled coupon fixture |
-| `COUPON-EXT-002` | Minimum-order enforcement with verified fixture |
-| `COUPON-EXT-003` | Usage-limit replay with persisted verification |
-| `COUPON-EXT-004` | Client-side override of coupon rule |
-| `COUPON-EXT-005` | Coupon code duplicate keys |
+| Ba API, generation, audit, extension | COMPLETE |
+| Postman/Newman execution và HTML | COMPLETE |
+| Tám bug reports, Issues và screenshots | COMPLETE |
+| CI pass/fail runs, links và screenshots | COMPLETE |
+| Agent Skill, design, pseudocode và video | COMPLETE; diagram cần human confirmation |
+| AI critique 200–300 từ | Markdown COMPLETE; PDF cần regenerate để đồng bộ |
+| AI critique PDF đồng bộ | TODO |
+| X-Student-Id console screenshot | TODO |
+| AI audit final integrity và PDF refresh | TODO |
+| Hai sample commits riêng theo wording đề | TODO |
+| Main report PDF sau nội dung cuối | TODO |
+| README self-assessment | COMPLETE – sinh viên đã điền 100/100 |
+| Final commit log và ZIP đúng tên | TODO |
 
-Các case này tập trung vào business-rule precision và parser/security edge cases mà AI baseline chưa bao phủ đủ sâu.
+## 16. Kết luận
 
-### 5.5 Test Execution
-
-Chưa thực hiện. Chưa có Postman/Newman output hoặc screenshot execution cho Coupon.
-
-### 5.6 Findings and Bugs
-
-Chưa có bug confirmed cho Coupon vì chưa có bằng chứng chạy test.
-
-## 6. API 3 - Admin Order Status
-
-### 6.1 API Analysis
-
-Artifact phân tích: `reports/analysis/admin_order_status_spec_analysis.md`.
-
-`PUT /api/admin/orders/:id/status` yêu cầu `Authorization: Bearer <token>` và tài khoản có quyền Admin. Body có `status` với các giá trị `pending`, `confirmed`, `shipping`, `delivered`, `canceled`. Đặc tả chưa nêu response schema, status code lỗi, transition matrix đầy đủ hoặc quyền override của admin với trạng thái terminal.
-
-### 6.2 AI-Assisted Test Generation
-
-Artifact thiết kế: `reports/analysis/admin_order_status_test_design.md`.
-
-File AI-generated: `test-cases/admin_order_status_test_cases.xlsx`.
-
-AI đã sinh `42` candidate test cases với coverage về admin authorized update, authentication/authorization negative cases, path `id` validation, `status` validation, extra fields, malformed JSON, content type, state transitions và persisted-state exploratory checks.
-
-### 6.3 Human Audit
-
-File audited: `test-cases/admin_order_status_test_cases_audited.xlsx`.
-
-Kết quả human audit:
-
-| Audit status | Số lượng |
-|---|---:|
-| `VALID` | `41` |
-| `INCOMPLETE` | `1` |
-| `INVALID` | `0` |
-
-Case `ORDERSTATUS-GEN-031` được giữ nguyên nội dung AI gốc và ghi correction để tách rõ authorization bypass với extra-field elevation khi triển khai sau.
-
-### 6.4 Human Extension
-
-Sinh viên chọn và bổ sung đúng `5` manual extension cases:
-
-| Case ID | Ý tưởng |
-|---|---|
-| `ORDERSTATUS-EXT-001` | Split authorization bypass and extra-field elevation |
-| `ORDERSTATUS-EXT-002` | Persisted-state verification after failed authorization |
-| `ORDERSTATUS-EXT-003` | Matrix-based transition coverage with controlled fixtures |
-| `ORDERSTATUS-EXT-004` | Cancellation rule consistency |
-| `ORDERSTATUS-EXT-005` | Duplicate status keys |
-
-Các case này tập trung vào authorization, persisted state và state-machine behavior.
-
-### 6.5 Test Execution
-
-Chưa thực hiện. Chưa có Postman/Newman output hoặc evidence chạy API admin order status.
-
-### 6.6 Findings and Bugs
-
-Chưa có bug confirmed cho Admin Order Status vì chưa có execution evidence.
-
-## 7. Postman Features Used
-
-Hiện tại chưa triển khai Postman collection nên chưa thể claim feature đã dùng. Khi chuyển sang `PHASE_6_POSTMAN_IMPLEMENTATION`, các feature dự kiến phù hợp gồm:
-
-- Collection variables: `baseUrl`, `studentId`, token, user/order/coupon IDs.
-- Environment variables cho local SUT.
-- Pre-request scripts để inject `X-Student-Id: {{studentId}}` và chuẩn bị token khi cần.
-- Data-driven runs cho partitions có thể lặp lại.
-- Test scripts để assert status, schema, security leakage và state consistency.
-- Newman HTML reporter để tạo evidence thực thi.
-
-## 8. CI/CD Integration
-
-Chưa thực hiện CI/CD. Repo chưa có workflow thật trong `.github/workflows` và chưa có passing/failing pipeline evidence. Khi làm Phase 9, pipeline nên cài Newman, chạy collection với environment, xuất HTML report và upload artifact. Hai run bắt buộc của đề là một run pass và một run fail có chủ đích; các run này chưa tồn tại nên không được ghi là hoàn thành.
-
-## 9. AI-Driven API Test Generator
-
-Agent Skill được định nghĩa tại `agent-skill/SKILL.md`. Thiết kế của skill đi theo pipeline:
-
-`API Specification -> Endpoint Parser -> Rule Extractor -> Coverage Dimensions -> Candidate Case Generator -> Traceability Validator -> PENDING_HUMAN_REVIEW`.
-
-Các artifact hỗ trợ:
-
-- `agent-skill/README.md`: mô tả cách dùng skill.
-- `agent-skill/design/design.md`: thiết kế generator.
-- `agent-skill/design/pseudocode.md`: pseudocode.
-- `agent-skill/design/diagram_drawing_guide.md`: hướng dẫn bố cục để sinh viên tự vẽ diagram.
-- `agent-skill/scripts/generate_api_tests.py`: prototype script minh họa luồng tạo candidate rows.
-- `agent-skill/demo/prompt-demo.md`: prompt demo đã dùng.
-- `agent-skill/demo/demo_notes.md`: ghi chú demo.
-- `agent-skill/demo/demo_script.md`: script nói khi quay demo.
-
-Lưu ý: diagram nộp cuối phải do sinh viên tự vẽ theo yêu cầu đề bài. Nội dung trong repo chỉ mô tả design để hỗ trợ sinh viên vẽ lại.
-
-## 10. Test Summary
-
-| API | AI-generated | Manual extension | Total designed | `VALID` | `INCOMPLETE` | `INVALID` | Executed | Passed | Failed | Confirmed bugs |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `POST /api/login` | `40` | `5` | `45` | `38` | `2` | `0` | `0` | `0` | `0` | `0` |
-| `POST /api/apply-coupon` | `40` | `5` | `45` | `36` | `4` | `0` | `0` | `0` | `0` | `0` |
-| `PUT /api/admin/orders/:id/status` | `42` | `5` | `47` | `41` | `1` | `0` | `0` | `0` | `0` | `0` |
-| Total | `122` | `15` | `137` | `115` | `7` | `0` | `0` | `0` | `0` | `0` |
-
-## 11. Bug Summary
-
-Chưa có bug được xác nhận. Các file trong `bug-reports/` hiện chưa có report thật vì chưa thực thi test. Nếu sau này có lỗi, mỗi bug cần có request, expected result, actual result, evidence screenshot/Newman output và GitHub Issue link thật.
-
-## 12. AI Usage, Audit, and Limitations
-
-Toàn bộ quá trình dùng AI được ghi tại `reports/ai_audit_report.md`. Vai trò của AI là hỗ trợ phân tích, sinh candidate cases, ghi correction theo human audit và soạn báo cáo. AI không tự phê duyệt case thay sinh viên, không tự kết luận bug và không tạo bằng chứng thực thi giả.
-
-Hạn chế chính ở thời điểm này là pipeline mới dừng ở thiết kế test. Các phần còn thiếu để hoàn tất bài nộp đầy đủ gồm Postman implementation, execution evidence, Newman report, bug analysis nếu có lỗi thật, CI/CD runs và PDF export của báo cáo.
-
-## 13. Conclusion
-
-Bài làm đã hoàn thành phần AI-assisted specification analysis, test design, candidate generation, human audit và manual extension cho cả ba API đã chọn. Tổng cộng có `137` test cases được thiết kế, trong đó `122` AI-generated cases và `15` manual extension cases. Các artifact hiện tại đủ để tiếp tục sang Postman/Newman implementation, nhưng chưa đủ để claim kết quả pass/fail hoặc bug confirmed.
+Repository có evidence thật cho toàn bộ pipeline kỹ thuật từ design đến CI/CD và tám confirmed bugs. Tuy nhiên bài nộp **chưa được xác nhận ready-to-submit** vì còn blocking TODO thủ công. Danh sách hành động ngắn nằm tại [final_todo.md](analysis/final_todo.md).

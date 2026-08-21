@@ -65,7 +65,7 @@ agent-skill/
 │
 └── demo/
     ├── video_link.md          ← Link video demo Agent Skill
-    └── demo_prompt.md          ← Prompt sử dụng để demo Agent Skill với một API
+    └── prompt-demo.md          ← Prompt sử dụng để demo Agent Skill với một API
 ```
 
 ## Demo video

@@ -66,7 +66,6 @@ Bằng chứng chính:
 - `reports/newman/order_status_rerun_after_automation_fix.json`
 - `reports/analysis/newman_execution_analysis.md`
 - `reports/analysis/order_status_automation_fix_review.md`
-- `reports/analysis/order_status_automation_fix_rerun.md`
 
 Bằng chứng bổ sung:
 

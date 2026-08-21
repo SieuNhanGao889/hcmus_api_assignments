@@ -1,0 +1,24 @@
+HW06 Git Commit Log
+Source: git log --date=iso-strict --pretty=format:<hash><TAB><date><TAB><author><TAB><subject> --reverse
+
+NOTE: This snapshot reflects committed history through a0adb735f70f48788cd7edefd7d11b32d7b4d74a.
+TODO: After committing final documentation, regenerate this file so the submission contains the final commit.
+
+dc824f928ff73974df71c600ffec74c3da398fd3	2026-08-20T21:35:47+07:00	SieuNhanGao889	chore: initialize HW06 API testing workspace
+3358441ce0a1179f784f2f566b88f0be69f98191	2026-08-20T22:27:14+07:00	SieuNhanGao889	add: setup agent skill
+647046b21aba5101b20c6332abc0374a25d3a3f2	2026-08-20T22:27:30+07:00	SieuNhanGao889	add: setup agent skill
+234a3d9a856679ef5b0e6aa2dcf79d921fa63963	2026-08-20T22:54:49+07:00	SieuNhanGao889	test(login): analyze API specification
+24d5c79555e36cb0c97137f7e0a0d39301746fc2	2026-08-20T23:07:53+07:00	SieuNhanGao889	test(login): design API test coverage
+f1ba34a9c53fe8d731a657d7555da0ec9f7ad451	2026-08-20T23:50:45+07:00	SieuNhanGao889	test(login): complete human audit and corrections
+024a7c00a75892ace49a7d489f782220276d5012	2026-08-21T01:49:57+07:00	SieuNhanGao889	Add API analysis and audited test suites
+3b5a3a77106190c459c469f58b2fc36f40468216	2026-08-21T01:52:45+07:00	SieuNhanGao889	Add agent skill design and demo materials
+183e4c376e9b4015ab87cdda2b28673620b44b6f	2026-08-21T01:52:58+07:00	SieuNhanGao889	Draft reports and submission summaries
+0c0682b36330b1ae7c557248828b1ea096e87a05	2026-08-21T02:35:14+07:00	SieuNhanGao889	add: video demo agent skill
+dacda7be1946e7f920a1766fbc75e60e623f7eb3	2026-08-21T02:39:53+07:00	SieuNhanGao889	add: demo notes
+b436d838cf982cae085f14c81501f5f433f92231	2026-08-21T08:00:13+07:00	SieuNhanGao889	test: implement and validate Postman API test suite
+3c15d2a9c674f2d7136299ca55792eaca50b13e6	2026-08-21T09:32:33+07:00	SieuNhanGao889	fix(postman): correct order status assertion modes
+6d62e1dc01b35396d3735499fa09e9c1e0d14bce	2026-08-21T09:32:45+07:00	SieuNhanGao889	test(newman): add execution evidence and analysis
+d262c1a281d522e4fb2d6ada8b96202ba52df76c	2026-08-21T09:32:52+07:00	SieuNhanGao889	docs(bugs): add confirmed bug reports and issue drafts
+b0c859fc0e4118eb89ca72964043fce6ba4f1b7b	2026-08-21T09:33:05+07:00	SieuNhanGao889	docs(report): update AI audit and test summary
+82c9633c9126050270094c72575c77c294d87057	2026-08-21T10:10:11+07:00	SieuNhanGao889	add: bug report and github issuses
+a0adb735f70f48788cd7edefd7d11b32d7b4d74a	2026-08-21T10:56:59+07:00	SieuNhanGao889	setup: ci/cd

@@ -2,7 +2,7 @@
 
 ## Demo video
 
-Video link: `TODO: paste demo video link here`
+Video link: [https://youtu.be/4fAWYhzeHzQ](https://youtu.be/4fAWYhzeHzQ)
 
 ## Demo scope
 
@@ -10,7 +10,7 @@ Video link: `TODO: paste demo video link here`
 - Demo API: `POST /api/login`
 - Input specification: `docs/api_specification.md`
 - Design artifact: `agent-skill/design/design.md`
-- Diagram artifact: `agent-skill/design/design.png`
+- Diagram artifact: `agent-skill/design/diagram.png`
 - Pseudocode artifact: `agent-skill/design/pseudocode.md`
 
 Demo này tập trung chứng minh Agent Skill có thể hỗ trợ workflow:
@@ -32,7 +32,7 @@ Sau `PENDING_HUMAN_REVIEW`, sinh viên tự review và phân loại test cases t
 
 1. Mở `agent-skill/SKILL.md` để giới thiệu quy tắc generator.
 2. Mở `docs/api_specification.md` và chọn endpoint `POST /api/login`.
-3. Mở `agent-skill/design/design.png` hoặc `design.md` để giải thích pipeline.
+3. Mở `agent-skill/design/diagram.png` hoặc `design.md` để giải thích pipeline.
 4. Trình bày cách AI sinh candidate test cases có traceability.
 5. Mở `test-cases/login_test_cases.xlsx` để chỉ các cột chính:
    - `case_id`
@@ -73,8 +73,8 @@ Các kết quả pass/fail, bug report, screenshot và CI/CD link chỉ được
 |---|---|
 | `SKILL.md` is included | Done |
 | `design.md` is included | Done |
-| `design.png` self-drawn diagram is included | Done |
+| `diagram.png` self-drawn diagram is included | Done |
 | `pseudocode.md` is included | Done |
 | Demo uses `POST /api/login` | Done |
 | AI-generated rows remain `PENDING_HUMAN_REVIEW` | Done |
-| Video link added | TODO |
+| Video link added | [https://youtu.be/4fAWYhzeHzQ](https://youtu.be/4fAWYhzeHzQ) |
