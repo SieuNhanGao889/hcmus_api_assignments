@@ -1,0 +1,262 @@
+name: EShop API tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      force_failure:
+        description: Run a clearly labeled CI-only failure after the smoke gate passes
+        required: false
+        type: boolean
+        default: false
+      run_full_regression:
+        description: Run the complete regression suite as non-gating diagnostics
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "20"
+  SUT_REPOSITORY: ttbhanh/eshop-sut
+  SUT_REF: 85af3ba875c88283615e22cb108f13e2fccaf0e9
+  COLLECTION: postman/HW06_EShop_API_Tests.postman_collection.json
+  ENVIRONMENT: postman/HW06_Local.postman_environment.json
+
+jobs:
+  smoke-gate:
+    name: Smoke / gating (3 APIs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout API test repository
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned EShop SUT
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.SUT_REPOSITORY }}
+          ref: ${{ env.SUT_REF }}
+          path: EShop-source
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: EShop-source/backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: EShop-source/backend
+        run: npm ci
+
+      - name: Install Newman and HTMLExtra reporter
+        run: npm install --global newman newman-reporter-htmlextra
+
+      - name: Start EShop backend
+        working-directory: EShop-source/backend
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/reports/ci/smoke"
+          nohup node server.js > "$GITHUB_WORKSPACE/reports/ci/smoke/backend.log" 2>&1 &
+          echo "BACKEND_PID=$!" >> "$GITHUB_ENV"
+
+      - name: Wait for backend readiness
+        shell: bash
+        run: |
+          for attempt in {1..30}; do
+            if curl --silent --show-error --fail http://localhost:3000/api/products > /dev/null; then
+              echo "EShop backend is ready."
+              exit 0
+            fi
+            if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
+              echo "EShop backend stopped before becoming ready."
+              cat reports/ci/smoke/backend.log
+              exit 1
+            fi
+            sleep 2
+          done
+          echo "Timed out waiting for EShop backend readiness."
+          cat reports/ci/smoke/backend.log
+          exit 1
+
+      - name: Run deterministic smoke datasets (gating)
+        shell: bash
+        run: |
+          set +e
+          smoke_status=0
+
+          newman run "$COLLECTION" \
+            --environment "$ENVIRONMENT" \
+            --folder "01 - POST Login - Data Run" \
+            --iteration-data postman/data/ci/login_smoke.json \
+            --reporters cli,json,htmlextra \
+            --reporter-json-export reports/ci/smoke/login_smoke.json \
+            --reporter-htmlextra-export reports/ci/smoke/login_smoke.html
+          if [ "$?" -ne 0 ]; then smoke_status=1; fi
+
+          newman run "$COLLECTION" \
+            --environment "$ENVIRONMENT" \
+            --folder "02 - POST Apply Coupon - Data Run" \
+            --iteration-data postman/data/ci/coupon_smoke.json \
+            --reporters cli,json,htmlextra \
+            --reporter-json-export reports/ci/smoke/coupon_smoke.json \
+            --reporter-htmlextra-export reports/ci/smoke/coupon_smoke.html
+          if [ "$?" -ne 0 ]; then smoke_status=1; fi
+
+          newman run "$COLLECTION" \
+            --environment "$ENVIRONMENT" \
+            --folder "03 - PUT Admin Order Status - Data Run" \
+            --iteration-data postman/data/ci/order_status_smoke.json \
+            --reporters cli,json,htmlextra \
+            --reporter-json-export reports/ci/smoke/order_status_smoke.json \
+            --reporter-htmlextra-export reports/ci/smoke/order_status_smoke.html
+          if [ "$?" -ne 0 ]; then smoke_status=1; fi
+
+          exit "$smoke_status"
+
+      - name: Intentional CI-only failure after successful smoke execution
+        if: ${{ success() && github.event_name == 'workflow_dispatch' && inputs.force_failure == true }}
+        shell: bash
+        run: |
+          echo "Intentional CI-only failure requested with force_failure=true."
+          exit 1
+
+      - name: Upload smoke Newman reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-smoke-reports-${{ github.run_id }}
+          path: reports/ci/smoke/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Stop EShop backend
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          if [ -n "${BACKEND_PID:-}" ] && kill -0 "$BACKEND_PID" 2>/dev/null; then
+            kill "$BACKEND_PID"
+          fi
+
+  full-regression-diagnostics:
+    name: Full regression / diagnostic (non-gating)
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_full_regression == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout API test repository
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned EShop SUT
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.SUT_REPOSITORY }}
+          ref: ${{ env.SUT_REF }}
+          path: EShop-source
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: EShop-source/backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: EShop-source/backend
+        run: npm ci
+
+      - name: Install Newman and HTMLExtra reporter
+        run: npm install --global newman newman-reporter-htmlextra
+
+      - name: Start EShop backend
+        working-directory: EShop-source/backend
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/reports/ci/full-regression"
+          nohup node server.js > "$GITHUB_WORKSPACE/reports/ci/full-regression/backend.log" 2>&1 &
+          echo "BACKEND_PID=$!" >> "$GITHUB_ENV"
+
+      - name: Wait for backend readiness
+        shell: bash
+        run: |
+          for attempt in {1..30}; do
+            if curl --silent --show-error --fail http://localhost:3000/api/products > /dev/null; then
+              echo "EShop backend is ready."
+              exit 0
+            fi
+            if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
+              echo "EShop backend stopped before becoming ready."
+              cat reports/ci/full-regression/backend.log
+              exit 1
+            fi
+            sleep 2
+          done
+          echo "Timed out waiting for EShop backend readiness."
+          cat reports/ci/full-regression/backend.log
+          exit 1
+
+      - name: Run complete regression datasets (diagnostic only)
+        id: regression
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          regression_status=0
+
+          newman run "$COLLECTION" \
+            --environment "$ENVIRONMENT" \
+            --folder "01 - POST Login - Data Run" \
+            --iteration-data postman/data/login_data.json \
+            --reporters cli,json,htmlextra \
+            --reporter-json-export reports/ci/full-regression/login_regression.json \
+            --reporter-htmlextra-export reports/ci/full-regression/login_regression.html
+          if [ "$?" -ne 0 ]; then regression_status=1; fi
+
+          newman run "$COLLECTION" \
+            --environment "$ENVIRONMENT" \
+            --folder "02 - POST Apply Coupon - Data Run" \
+            --iteration-data postman/data/coupon_data.json \
+            --reporters cli,json,htmlextra \
+            --reporter-json-export reports/ci/full-regression/coupon_regression.json \
+            --reporter-htmlextra-export reports/ci/full-regression/coupon_regression.html
+          if [ "$?" -ne 0 ]; then regression_status=1; fi
+
+          newman run "$COLLECTION" \
+            --environment "$ENVIRONMENT" \
+            --folder "03 - PUT Admin Order Status - Data Run" \
+            --iteration-data postman/data/order_status_data.json \
+            --reporters cli,json,htmlextra \
+            --reporter-json-export reports/ci/full-regression/order_status_regression.json \
+            --reporter-htmlextra-export reports/ci/full-regression/order_status_regression.html
+          if [ "$?" -ne 0 ]; then regression_status=1; fi
+
+          exit "$regression_status"
+
+      - name: Record diagnostic outcome
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          echo "## Full-regression diagnostic" >> "$GITHUB_STEP_SUMMARY"
+          echo "Newman step outcome: ${{ steps.regression.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Failures are preserved in the uploaded reports and do not gate the smoke job." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full-regression Newman reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-full-regression-reports-${{ github.run_id }}
+          path: reports/ci/full-regression/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Stop EShop backend
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          if [ -n "${BACKEND_PID:-}" ] && kill -0 "$BACKEND_PID" 2>/dev/null; then
+            kill "$BACKEND_PID"
+          fi

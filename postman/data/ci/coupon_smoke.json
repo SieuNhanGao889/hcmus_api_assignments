@@ -1,0 +1,31 @@
+[
+  {
+    "dataset": "coupon",
+    "case_id": "COUPON-GEN-003",
+    "scenario_id": "COUPON-GEN-003",
+    "source": "AI_GENERATED",
+    "objective": "Unknown coupon code",
+    "original_audit_status": "VALID",
+    "original_audit_notes": "",
+    "original_human_correction": "",
+    "original_requirement_ref": "FR-09",
+    "original_security_ref": "",
+    "original_spec_reference": "docs/api_specification.md - Coupons 5.1 POST /api/apply-coupon",
+    "original_expected_status": "SPEC_UNDEFINED",
+    "original_expected_assertion": "Không trả discount hợp lệ; không lộ coupon/internal details.",
+    "original_assumption_or_open_question": "Exact status/error schema chưa được spec định nghĩa; không được trả discount hợp lệ hoặc lộ internal details.",
+    "original_headers": "{\"Content-Type\":\"application/json\",\"X-Student-Id\":\"{{studentId}}\"}",
+    "original_body": "{\"code\":\"{{unknownCouponCode}}\",\"total_amount\":500000,\"user_id\":{{validUserId}}}",
+    "request_body": "{\"code\":\"{{unknownCouponCode}}\",\"total_amount\":500000,\"user_id\":{{validUserId}}}",
+    "implementation_status": "IMPLEMENTED",
+    "assertion_requirement_source": "docs/api_specification.md - Coupons 5.1 POST /api/apply-coupon",
+    "automation_note": "Historical workbook fields are preserved above; implementation fields do not overwrite the audit history.",
+    "flow": "SINGLE",
+    "content_type": "application/json",
+    "assertion_mode": "REJECT_NO_DISCOUNT",
+    "setup_usage_count_before": 0,
+    "send_authorization": true,
+    "controlled_state": "A disposable user and controlled coupon fixtures are created for this iteration.",
+    "input_total_amount": 500000
+  }
+]

@@ -1,0 +1,28 @@
+[
+  {
+    "dataset": "login",
+    "case_id": "LOGIN-GEN-005",
+    "scenario_id": "LOGIN-GEN-005",
+    "source": "AI_GENERATED",
+    "objective": "Xác minh email đúng format nhưng không tồn tại không được login thành công.",
+    "original_audit_status": "VALID",
+    "original_audit_notes": "",
+    "original_human_correction": "",
+    "original_requirement_ref": "FR-02",
+    "original_security_ref": "Account enumeration",
+    "original_spec_reference": "docs/api_specification.md - Authentication 1.2 POST /api/login - email",
+    "original_expected_status": "SPEC_UNDEFINED",
+    "original_expected_assertion": "Không trả token; response không lộ thông tin nội bộ.",
+    "original_assumption_or_open_question": "Exact error status/schema chưa được spec định nghĩa; quan sát implementation nhưng không được cấp token.",
+    "original_headers": "{\"Content-Type\":\"application/json\",\"X-Student-Id\":\"{{studentId}}\"}",
+    "original_body": "{\"email\":\"{{unknownEmail}}\",\"password\":\"{{validUserPassword}}\"}",
+    "request_body": "{\"email\":\"{{unknownEmail}}\",\"password\":\"{{validUserPassword}}\"}",
+    "implementation_status": "IMPLEMENTED",
+    "assertion_requirement_source": "docs/api_specification.md - Authentication 1.2 POST /api/login - email",
+    "automation_note": "Historical workbook fields are preserved above; implementation fields do not overwrite the audit history.",
+    "flow": "SINGLE",
+    "content_type": "application/json",
+    "assertion_mode": "NO_TOKEN",
+    "controlled_state": "Disposable normal user is created for this iteration."
+  }
+]

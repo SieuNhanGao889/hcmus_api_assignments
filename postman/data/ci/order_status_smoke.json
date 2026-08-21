@@ -1,0 +1,32 @@
+[
+  {
+    "dataset": "order_status",
+    "case_id": "ORDERSTATUS-GEN-002",
+    "scenario_id": "ORDERSTATUS-GEN-002",
+    "source": "AI_GENERATED",
+    "objective": "Admin update existing order to allowed status confirmed",
+    "original_audit_status": "VALID",
+    "original_audit_notes": "",
+    "original_human_correction": "",
+    "original_requirement_ref": "FR-18; FR-10",
+    "original_security_ref": "",
+    "original_spec_reference": "docs/api_specification.md - Admin orders 6.2 PUT /api/admin/orders/:id/status",
+    "original_expected_status": "SPEC_UNDEFINED",
+    "original_expected_assertion": "Nếu request thành công, status persisted/response nếu có phải phản ánh allowed status requested; exact status code undefined.",
+    "original_assumption_or_open_question": "",
+    "original_headers": "{\"Content-Type\":\"application/json\",\"Authorization\":\"Bearer {{adminToken}}\",\"X-Student-Id\":\"{{studentId}}\"}",
+    "original_body": "{\"status\":\"confirmed\"}",
+    "request_body": "{\"status\":\"confirmed\"}",
+    "implementation_status": "IMPLEMENTED_WITH_ADDITIONAL_REQUIREMENT",
+    "assertion_requirement_source": "EShop-source/README.md FR-10",
+    "automation_note": "Historical workbook fields are preserved above; implementation fields do not overwrite the audit history. State assertion uses the approved FR-10 source; original SPEC_UNDEFINED is preserved.",
+    "flow": "SINGLE",
+    "content_type": "application/json",
+    "auth_profile": "ADMIN",
+    "source_state": "pending",
+    "path_value": "{{orderUnderTestId}}",
+    "controlled_state": "A disposable owner and a fresh order are created for this iteration.",
+    "target_status": "confirmed",
+    "assertion_mode": "STATE_CHANGED_TO_TARGET"
+  }
+]
