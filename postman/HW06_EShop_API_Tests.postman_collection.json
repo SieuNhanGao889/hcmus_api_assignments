@@ -1,0 +1,2435 @@
+{
+  "info": {
+    "_postman_id": "4f5a4c62-4b43-4fa0-9e18-231273640006",
+    "name": "HW06 EShop API Tests",
+    "description": "PHASE_6 implementation for POST /api/login, POST /api/apply-coupon, and PUT /api/admin/orders/:id/status. No execution results are embedded. Run each data folder with its matching data file; setup requests are explicitly labeled and are not selected-API test executions.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const studentId = pm.environment.get(\"studentId\");",
+          "if (!studentId) { throw new Error(\"Missing required environment variable: studentId\"); }",
+          "pm.request.headers.upsert({ key: \"X-Student-Id\", value: studentId });",
+          "if (!pm.environment.get(\"runId\")) {",
+          "  pm.environment.set(\"runId\", pm.variables.replaceIn(\"{{$timestamp}}-{{$randomInt}}\"));",
+          "}",
+          "console.log(\"X-Student-Id attached:\", studentId);"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "validOrderStatuses",
+      "value": "[\"pending\",\"confirmed\",\"shipping\",\"delivered\",\"canceled\"]",
+      "type": "string"
+    },
+    {
+      "key": "loginDataset",
+      "value": "login",
+      "type": "string"
+    },
+    {
+      "key": "couponDataset",
+      "value": "coupon",
+      "type": "string"
+    },
+    {
+      "key": "orderStatusDataset",
+      "value": "order_status",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - POST Login - Data Run",
+      "description": "Run with postman/data/login_data.json.",
+      "item": [
+        {
+          "name": "SETUP - Create disposable normal user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/register",
+            "description": "SETUP ONLY. Creates a normal user for one data iteration; not counted as selected-API execution.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"HW06 Disposable User\",\"email\":\"{{validUserEmail}}\",\"password\":\"{{validUserPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"login\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "[\"validUserId\",\"loginToken\",\"loginUserObject\",\"lastLoginCaseId\",\"lastLoginStatus\",\"enumAStatus\",\"enumABody\",\"enumATime\",\"firstLoginToken\",\"lockoutAttempt2Ready\",\"lockoutAttempt3Ready\",\"loginSequenceReady\",\"enumPairAReady\"].forEach(k=>pm.environment.unset(k));",
+                  "pm.environment.set(\"loginSetupReady\",\"false\");",
+                  "pm.environment.set(\"firstLoginReady\",\"false\");",
+                  "pm.environment.set(\"caseExecuted\",\"false\");",
+                  "pm.environment.set(\"setupBlockedReason\",\"\");",
+                  "const key = pm.environment.get(\"runId\") + \"-L-\" + pm.info.iteration + \"-\" + pm.variables.replaceIn(\"{{$randomInt}}\");",
+                  "pm.environment.set(\"iterationKey\", key);",
+                  "pm.environment.set(\"validUserEmail\", \"hw06.\" + key + \"@example.test\");",
+                  "pm.environment.set(\"validUserPassword\", \"Hw06!\" + key);",
+                  "pm.environment.set(\"wrongPassword\", \"Wrong!\" + key);",
+                  "pm.environment.set(\"unknownEmail\", \"unknown.\" + key + \"@example.test\");",
+                  "pm.environment.set(\"validUserEmailCaseVariant\", (\"hw06.\" + key + \"@example.test\").toUpperCase());",
+                  "pm.environment.set(\"validUserPasswordCaseVariant\", (\"hw06!\" + key));",
+                  "pm.environment.set(\"veryLongEmail\", \"a\".repeat(300) + \".\" + key + \"@example.test\");",
+                  "pm.environment.set(\"veryLongPassword\", \"A!1\" + \"x\".repeat(10000));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let setupOk=false;",
+                  "pm.test(\"SETUP register returned a numeric id\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(Number.isFinite(Number(json.id))).to.eql(true);",
+                  "  pm.environment.set(\"validUserId\", String(json.id)); setupOk=true;",
+                  "});",
+                  "pm.environment.set(\"loginSetupReady\",String(setupOk));",
+                  "if(!setupOk) pm.environment.set(\"setupBlockedReason\",\"LOGIN_SETUP_REGISTER_FAILED\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - First successful login for repeated-login scenario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "X-Student-Id", "value": "{{studentId}}", "type": "text"},
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "SETUP ONLY for LOGIN-GEN-004. The following CASE request is the selected second login.",
+            "body": {"mode": "raw", "raw": "{\"email\":\"{{validUserEmail}}\",\"password\":\"{{validUserPassword}}\"}", "options": {"raw": {"language": "json"}}}
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {"type": "text/javascript", "exec": [
+                "if(pm.iterationData.get(\"dataset\")!==\"login\"||pm.iterationData.get(\"flow\")!==\"REPEATED_LOGIN_SEQUENCE\") pm.execution.skipRequest();",
+                "if(pm.environment.get(\"loginSetupReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"LOGIN_GEN_004_REGISTER_NOT_READY\");pm.execution.skipRequest();}"
+              ]}
+            },
+            {
+              "listen": "test",
+              "script": {"type": "text/javascript", "exec": [
+                "let ok=false;pm.test(\"[LOGIN-GEN-004] first login setup succeeds\",function(){const j=pm.response.json();pm.expect(j.token).to.be.a(\"string\").and.not.empty;pm.expect(j.user).to.be.an(\"object\");pm.environment.set(\"firstLoginToken\",j.token);ok=true;});",
+                "pm.environment.set(\"firstLoginReady\",String(ok));if(!ok)pm.environment.set(\"setupBlockedReason\",\"LOGIN_GEN_004_FIRST_LOGIN_FAILED\");"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "CASE - Data-driven POST /api/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "Executes the workbook row identified by iterationData.case_id. SPEC_UNDEFINED rows do not receive invented status assertions.",
+            "body": {
+              "mode": "raw",
+              "raw": "{{caseRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"login\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "const flow = pm.iterationData.get(\"flow\");",
+                  "if ([\"TOKEN_IDENTITY_SEQUENCE\", \"PAIRED_ENUMERATION_OBSERVATION\"].includes(flow)) {",
+                  "  pm.execution.skipRequest(); return;",
+                  "}",
+                  "if(pm.environment.get(\"loginSetupReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"LOGIN_CASE_SETUP_NOT_READY\");console.warn(\"SETUP_BLOCKED\",pm.iterationData.get(\"scenario_id\"));pm.execution.skipRequest();return;}",
+                  "if(flow===\"REPEATED_LOGIN_SEQUENCE\"&&pm.environment.get(\"firstLoginReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"LOGIN_GEN_004_FIRST_LOGIN_NOT_READY\");console.warn(\"SETUP_BLOCKED LOGIN-GEN-004\");pm.execution.skipRequest();return;}",
+                  "const raw = pm.iterationData.get(\"request_body\") || \"\";",
+                  "pm.variables.set(\"caseRequestBody\", raw === \"(empty body)\" ? \"\" : pm.variables.replaceIn(raw));",
+                  "if(/{{[^{}]+}}/.test(pm.variables.get(\"caseRequestBody\"))){pm.environment.set(\"setupBlockedReason\",\"LOGIN_UNRESOLVED_PLACEHOLDER\");throw new Error(\"SETUP_BLOCKED: unresolved placeholder in login CASE body\");}",
+                  "pm.environment.set(\"caseExecuted\",\"true\");",
+                  "const contentType = pm.iterationData.get(\"content_type\");",
+                  "pm.request.headers.remove(\"Content-Type\");",
+                  "if (contentType) pm.request.headers.upsert({key: \"Content-Type\", value: contentType});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const caseId = pm.iterationData.get(\"case_id\");",
+                  "const scenarioId = pm.iterationData.get(\"scenario_id\");",
+                  "pm.test(\"[\" + scenarioId + \"] traceability metadata is present\", function () {",
+                  "  pm.expect(caseId).to.match(/^LOGIN-/);",
+                  "});",
+                  "const expected = String(pm.iterationData.get(\"original_expected_status\") || \"\");",
+                  "if (/^\\d+$/.test(expected)) {",
+                  "  pm.test(\"[\" + scenarioId + \"] original specified status\", function () { pm.response.to.have.status(Number(expected)); });",
+                  "}",
+                  "let json = null;",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "const mode = pm.iterationData.get(\"assertion_mode\");",
+                  "if (mode === \"LOGIN_SUCCESS\") {",
+                  "  pm.test(\"[\" + scenarioId + \"] login success schema\", function () {",
+                  "    pm.expect(json).to.be.an(\"object\");",
+                  "    pm.expect(json.token).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(json.user).to.be.an(\"object\");",
+                  "  });",
+                  "}",
+                  "if (mode === \"NO_TOKEN\") {",
+                  "  pm.test(\"[\" + scenarioId + \"] no token is issued\", function () {",
+                  "    pm.expect(!json || !Object.prototype.hasOwnProperty.call(json, \"token\")).to.eql(true);",
+                  "  });",
+                  "}",
+                  "if(mode===\"ROLE_NOT_ELEVATED\"&&json&&json.user){pm.test(\"[\"+scenarioId+\"] extra fields do not elevate role\",function(){pm.expect(json.user.role).not.to.eql(\"admin\");pm.expect(json.user.isAdmin).not.to.eql(true);if(json.user.id!==undefined)pm.expect(Number(json.user.id)).to.eql(Number(pm.environment.get(\"validUserId\")));});}",
+                  "if(mode===\"NO_INTERNAL_LEAKAGE\"||mode===\"NO_TOKEN_AND_NO_INTERNAL_LEAKAGE\"){const text=pm.response.text();pm.test(\"[\"+scenarioId+\"] no internal details leak\",function(){pm.expect(text).not.to.match(/(at\\s+[^\\n]+\\([^\\n]*:\\d+:\\d+\\)|[A-Za-z]:\\\\[^\\s]+|\\/(?:home|usr|var|app)\\/[^\\s]+|SQLITE_|SELECT\\s+.+\\s+FROM|Sequelize|TypeError:|ReferenceError:)/i);});}",
+                  "if(mode===\"NO_TOKEN_AND_NO_INTERNAL_LEAKAGE\"){pm.test(\"[\"+scenarioId+\"] malformed JSON issues no token\",function(){pm.expect(!json||!Object.prototype.hasOwnProperty.call(json,\"token\")).to.eql(true);});}",
+                  "if (json && json.user) {",
+                  "  pm.test(\"[\" + scenarioId + \"] no sensitive user fields\", function () {",
+                  "    [\"password\", \"password_hash\", \"resetToken\", \"reset_token\", \"newPassword\"].forEach(k => pm.expect(json.user).not.to.have.property(k));",
+                  "  });",
+                  "}",
+                  "pm.environment.set(\"lastLoginCaseId\", caseId);",
+                  "pm.environment.set(\"lastLoginStatus\", String(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "LOCKOUT SETUP/STEP - Wrong password attempt 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "Part of LOGIN-GEN-040. Uses EShop-source/README.md FR-02; not a separate test case.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{validUserEmail}}\",\"password\":\"{{wrongPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"login\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (![\"LOCKOUT_TWO_ATTEMPTS\",\"LOCKOUT_THREE_ATTEMPTS\"].includes(pm.iterationData.get(\"flow\"))) pm.execution.skipRequest();",
+                  "if(pm.environment.get(\"loginSetupReady\")!==\"true\"||pm.environment.get(\"caseExecuted\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"LOCKOUT_ATTEMPT_2_PREREQUISITE_MISSING\");pm.execution.skipRequest();}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let ok=false;pm.test(\"[LOGIN-GEN-040] attempt 2 issues no token\", function(){ let j={}; try{j=pm.response.json();}catch(e){} pm.expect(j).not.to.have.property(\"token\");ok=true;});pm.environment.set(\"lockoutAttempt2Ready\",String(ok));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "LOCKOUT VERIFY - Correct password is accepted after 2 failures",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "X-Student-Id", "value": "{{studentId}}", "type": "text"},
+              {"key": "Content-Type", "value": "application/json", "type": "text"}
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "LOGIN-GEN-040 boundary scenario A: verifies that two consecutive wrong passwords do not lock the account.",
+            "body": {"mode": "raw", "raw": "{\"email\":\"{{validUserEmail}}\",\"password\":\"{{validUserPassword}}\"}", "options": {"raw": {"language": "json"}}}
+          },
+          "response": [],
+          "event": [
+            {"listen": "prerequest", "script": {"type": "text/javascript", "exec": [
+              "if(pm.iterationData.get(\"dataset\")!==\"login\"||pm.iterationData.get(\"flow\")!==\"LOCKOUT_TWO_ATTEMPTS\")pm.execution.skipRequest();",
+              "if(pm.environment.get(\"lockoutAttempt2Ready\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"LOCKOUT_TWO_ATTEMPTS_NOT_READY\");pm.execution.skipRequest();}"
+            ]}},
+            {"listen": "test", "script": {"type": "text/javascript", "exec": [
+              "pm.test(\"[LOGIN-GEN-040-A][FR-02] correct login succeeds after two failures\",function(){const j=pm.response.json();pm.expect(j.token).to.be.a(\"string\").and.not.empty;pm.expect(j.user).to.be.an(\"object\");});"
+            ]}}
+          ]
+        },
+        {
+          "name": "LOCKOUT SETUP/STEP - Wrong password attempt 3",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "Part of LOGIN-GEN-040. Uses EShop-source/README.md FR-02; not a separate test case.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{validUserEmail}}\",\"password\":\"{{wrongPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"login\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (pm.iterationData.get(\"flow\") !== \"LOCKOUT_THREE_ATTEMPTS\") pm.execution.skipRequest();",
+                  "if(pm.environment.get(\"lockoutAttempt2Ready\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"LOCKOUT_ATTEMPT_3_PREREQUISITE_MISSING\");pm.execution.skipRequest();}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let ok=false;pm.test(\"[LOGIN-GEN-040] attempt 3 issues no token\", function(){ let j={}; try{j=pm.response.json();}catch(e){} pm.expect(j).not.to.have.property(\"token\");ok=true;});pm.environment.set(\"lockoutAttempt3Ready\",String(ok));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "LOCKOUT VERIFY - Correct password is blocked after 3 failures",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "LOGIN-GEN-040 verification. No exact HTTP status is invented; lock duration expiry is not exercised in this run.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{validUserEmail}}\",\"password\":\"{{validUserPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"login\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (pm.iterationData.get(\"flow\") !== \"LOCKOUT_THREE_ATTEMPTS\") pm.execution.skipRequest();",
+                  "if(pm.environment.get(\"lockoutAttempt3Ready\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"LOCKOUT_VERIFY_PREREQUISITE_MISSING\");pm.execution.skipRequest();}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"[LOGIN-GEN-040-B][FR-02] third failure produces locked behavior\",function(){let j={};try{j=pm.response.json();}catch(e){}pm.expect(j).not.to.have.property(\"token\");const message=String(j.error||j.message||pm.response.text()||\"\").trim();pm.expect(message).not.to.be.empty;pm.expect(message).not.to.match(/(stack|SQLITE_|SELECT\\s+.+\\s+FROM|[A-Za-z]:\\\\|\\/(?:home|usr|var|app)\\/)/i);});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SEQUENCE - Login for token/identity extensions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "Dedicated login step for LOGIN-EXT-001/002.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{validUserEmail}}\",\"password\":\"{{validUserPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"login\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (pm.iterationData.get(\"flow\") !== \"TOKEN_IDENTITY_SEQUENCE\") pm.execution.skipRequest();",
+                  "if(pm.environment.get(\"loginSetupReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"LOGIN_TOKEN_SEQUENCE_SETUP_NOT_READY\");pm.execution.skipRequest();return;}",
+                  "pm.environment.set(\"caseExecuted\",\"true\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const caseId=pm.iterationData.get(\"case_id\");let ok=false;",
+                  "pm.test(\"[\"+caseId+\"] login returns token\", function(){ const j=pm.response.json(); pm.expect(j.token).to.be.a(\"string\").and.not.empty; pm.environment.set(\"loginToken\",j.token); pm.environment.set(\"loginUserObject\",JSON.stringify(j.user||{}));ok=true; });pm.environment.set(\"loginSequenceReady\",String(ok));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "VERIFY - GET /api/users/me with login token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{loginToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/me",
+            "description": "Verification request for LOGIN-EXT-001/002; follow-up exact status remains historically SPEC_UNDEFINED."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"login\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (pm.iterationData.get(\"flow\") !== \"TOKEN_IDENTITY_SEQUENCE\") pm.execution.skipRequest();",
+                  "if(pm.environment.get(\"caseExecuted\")!==\"true\"||pm.environment.get(\"loginSequenceReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"LOGIN_IDENTITY_VERIFICATION_BLOCKED\");pm.execution.skipRequest();return;}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const caseId=pm.iterationData.get(\"case_id\"); let j=null; try{j=pm.response.json();}catch(e){}",
+                  "pm.test(\"[\"+caseId+\"] login token is accepted\",function(){pm.expect([401,403]).not.to.include(pm.response.code);});",
+                  "if(caseId===\"LOGIN-EXT-002\" && j){const original=JSON.parse(pm.environment.get(\"loginUserObject\")||\"{}\");pm.test(\"[LOGIN-EXT-002] shared identity fields are consistent\",function(){if(original.id!==undefined&&j.id!==undefined)pm.expect(j.id).to.eql(original.id);if(original.email&&j.email)pm.expect(j.email).to.eql(original.email);});}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PAIR A - Unknown email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "First observation for LOGIN-EXT-004.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{unknownEmail}}\",\"password\":\"{{wrongPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"login\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (pm.iterationData.get(\"flow\") !== \"PAIRED_ENUMERATION_OBSERVATION\") pm.execution.skipRequest();",
+                  "if(pm.environment.get(\"loginSetupReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"LOGIN_ENUMERATION_SETUP_NOT_READY\");pm.execution.skipRequest();return;}",
+                  "pm.environment.set(\"caseExecuted\",\"true\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set(\"enumAStatus\",String(pm.response.code));pm.environment.set(\"enumABody\",pm.response.text());pm.environment.set(\"enumATime\",String(pm.response.responseTime));pm.test(\"[LOGIN-EXT-004-A] no token\",function(){let j={};try{j=pm.response.json();}catch(e){}pm.expect(j).not.to.have.property(\"token\");});pm.environment.set(\"enumPairAReady\",\"true\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PAIR B - Existing email and wrong password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "Second observation for LOGIN-EXT-004. Differences are logged for human analysis; no unsupported equality assertion is invented.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{validUserEmail}}\",\"password\":\"{{wrongPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"login\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (pm.iterationData.get(\"flow\") !== \"PAIRED_ENUMERATION_OBSERVATION\") pm.execution.skipRequest();",
+                  "if(pm.environment.get(\"caseExecuted\")!==\"true\"||pm.environment.get(\"enumPairAReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"LOGIN_ENUMERATION_PAIR_B_BLOCKED\");pm.execution.skipRequest();}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let j={};try{j=pm.response.json();}catch(e){}",
+                  "pm.test(\"[LOGIN-EXT-004-B] no token\",function(){pm.expect(j).not.to.have.property(\"token\");});",
+                  "console.log(\"LOGIN-EXT-004 paired observation\",{unknownEmail:{status:pm.environment.get(\"enumAStatus\"),body:pm.environment.get(\"enumABody\"),time:pm.environment.get(\"enumATime\")},wrongPassword:{status:pm.response.code,body:pm.response.text(),time:pm.response.responseTime}});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - POST Apply Coupon - Data Run",
+      "description": "Run with postman/data/coupon_data.json. Controlled coupons are created and deleted per iteration.",
+      "item": [
+        {
+          "name": "SETUP - Login confirmed seed admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "SETUP ONLY. Uses source-confirmed admin seed credentials.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{seedAdminEmail}}\",\"password\":\"{{seedAdminPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "[\"adminToken\",\"adminUserId\",\"userToken\",\"validUserId\",\"otherUserId\",\"unknownUserId\",\"validCouponId\",\"formulaCouponId\",\"minOrderCouponId\",\"expiredCouponId\",\"oneUseCouponId\",\"validCouponCodeLowercase\",\"replayCouponId\",\"lastCouponCaseId\",\"lastCouponStatus\",\"couponAdminReady\",\"couponUserReady\",\"couponUserTokenReady\",\"couponUserAbsenceReady\",\"couponReplayFirstReady\"].forEach(k=>pm.environment.unset(k));",
+                  "pm.environment.set(\"couponSetupReady\",\"false\");pm.environment.set(\"caseExecuted\",\"false\");pm.environment.set(\"setupBlockedReason\",\"\");",
+                  "const key = pm.environment.get(\"runId\") + \"-C-\" + pm.info.iteration + \"-\" + pm.variables.replaceIn(\"{{$randomInt}}\");",
+                  "pm.environment.set(\"iterationKey\", key);",
+                  "pm.environment.set(\"validUserEmail\", \"coupon.\" + key + \"@example.test\");",
+                  "pm.environment.set(\"validUserPassword\", \"Hw06!\" + key);",
+                  "pm.environment.set(\"unknownCouponCode\", \"UNKNOWN-\" + key);",
+                  "pm.environment.set(\"validCouponCode\", \"FIXED-\" + key);",
+                  "pm.environment.set(\"formulaCouponCode\", \"PERCENT-\" + key);",
+                  "pm.environment.set(\"minOrderCouponCode\", \"MIN-\" + key);",
+                  "pm.environment.set(\"expiredCouponCode\", \"EXPIRED-\" + key);",
+                  "pm.environment.set(\"oneUseCouponCode\", \"ONEUSE-\" + key);",
+                  "pm.environment.set(\"formulaTotalAmount\", \"500000\");",
+                  "pm.environment.set(\"formulaDiscountValue\", \"10\");",
+                  "pm.environment.set(\"validCouponCodeLowercase\",pm.environment.get(\"validCouponCode\").toLowerCase());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let ok=false;pm.test(\"SETUP admin login returned a valid admin identity\",function(){const j=pm.response.json();pm.expect(j.token).to.be.a(\"string\").and.not.empty;pm.expect(j.user.role).to.eql(\"admin\");pm.expect(Number.isFinite(Number(j.user.id))).to.eql(true);pm.environment.set(\"adminToken\",j.token);pm.environment.set(\"adminUserId\",String(j.user.id));ok=true;});pm.environment.set(\"couponAdminReady\",String(ok));if(!ok)pm.environment.set(\"setupBlockedReason\",\"COUPON_ADMIN_LOGIN_FAILED\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Register disposable coupon user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/register",
+            "description": "SETUP ONLY. Runtime identity is extracted dynamically.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"HW06 Coupon User\",\"email\":\"{{validUserEmail}}\",\"password\":\"{{validUserPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let ok=false;pm.test(\"SETUP disposable user and distinct other identity extracted\",function(){const j=pm.response.json(),validId=Number(j.id),otherId=Number(pm.environment.get(\"adminUserId\"));pm.expect(Number.isFinite(validId)).to.eql(true);pm.expect(Number.isFinite(otherId)).to.eql(true);pm.expect(otherId).not.to.eql(validId);pm.environment.set(\"validUserId\",String(validId));pm.environment.set(\"otherUserId\",String(otherId));ok=true;});pm.environment.set(\"couponUserReady\",String(ok));if(!ok)pm.environment.set(\"setupBlockedReason\",\"COUPON_DISTINCT_OTHER_USER_NOT_READY\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Login disposable coupon user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "SETUP ONLY. Extracts userToken dynamically.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{validUserEmail}}\",\"password\":\"{{validUserPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let ok=false;pm.test(\"SETUP normal user token extracted\",function(){const j=pm.response.json();pm.expect(j.token).to.be.a(\"string\").and.not.empty;pm.environment.set(\"userToken\",j.token);ok=true;});pm.environment.set(\"couponUserTokenReady\",String(ok));if(!ok)pm.environment.set(\"setupBlockedReason\",\"COUPON_USER_LOGIN_FAILED\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Discover users and establish unknown user id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "X-Student-Id", "value": "{{studentId}}", "type": "text"},
+              {"key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text"}
+            ],
+            "url": "{{baseUrl}}/api/admin/users",
+            "description": "SETUP ONLY. Derives an unoccupied numeric user id from observed data and blocks the CASE if absence cannot be established."
+          },
+          "response": [],
+          "event": [
+            {"listen": "prerequest", "script": {"type": "text/javascript", "exec": [
+              "if(pm.iterationData.get(\"dataset\")!==\"coupon\")pm.execution.skipRequest();",
+              "if(pm.environment.get(\"couponAdminReady\")!==\"true\"||pm.environment.get(\"couponUserReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"COUPON_USER_DISCOVERY_PREREQUISITE_MISSING\");pm.execution.skipRequest();}"
+            ]}},
+            {"listen": "test", "script": {"type": "text/javascript", "exec": [
+              "let ok=false;pm.test(\"SETUP unknown user id is absent from observed users\",function(){const rows=pm.response.json();pm.expect(rows).to.be.an(\"array\");const ids=rows.map(u=>Number(u.id)).filter(Number.isFinite);pm.expect(ids).to.include(Number(pm.environment.get(\"validUserId\")));pm.expect(ids).to.include(Number(pm.environment.get(\"otherUserId\")));const candidate=(ids.length?Math.max(...ids):0)+1;pm.expect(ids).not.to.include(candidate);pm.environment.set(\"unknownUserId\",String(candidate));ok=true;});pm.environment.set(\"couponUserAbsenceReady\",String(ok));if(!ok)pm.environment.set(\"setupBlockedReason\",\"UNKNOWN_USER_ABSENCE_NOT_ESTABLISHED\");"
+            ]}}
+          ]
+        },
+        {
+          "name": "SETUP - Create fixed coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/coupons",
+            "description": "SETUP ONLY. Controlled coupon fixture; not counted as selected-API execution.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"{{validCouponCode}}\",\"type\":\"fixed\",\"discount_value\":50000,\"min_order_amount\":0,\"expired_at\":\"2099-12-31\",\"max_uses_per_user\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP fixed coupon id extracted\",function(){const j=pm.response.json();pm.expect(j.id).to.exist;pm.environment.set(\"validCouponId\",String(j.id));});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Create percent formula coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/coupons",
+            "description": "SETUP ONLY. Controlled coupon fixture; not counted as selected-API execution.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"{{formulaCouponCode}}\",\"type\":\"percent\",\"discount_value\":10,\"min_order_amount\":0,\"expired_at\":\"2099-12-31\",\"max_uses_per_user\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP percent formula coupon id extracted\",function(){const j=pm.response.json();pm.expect(j.id).to.exist;pm.environment.set(\"formulaCouponId\",String(j.id));});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Create minimum-order coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/coupons",
+            "description": "SETUP ONLY. Controlled coupon fixture; not counted as selected-API execution.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"{{minOrderCouponCode}}\",\"type\":\"fixed\",\"discount_value\":10000,\"min_order_amount\":200000,\"expired_at\":\"2099-12-31\",\"max_uses_per_user\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP minimum-order coupon id extracted\",function(){const j=pm.response.json();pm.expect(j.id).to.exist;pm.environment.set(\"minOrderCouponId\",String(j.id));});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Create expired coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/coupons",
+            "description": "SETUP ONLY. Controlled coupon fixture; not counted as selected-API execution.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"{{expiredCouponCode}}\",\"type\":\"fixed\",\"discount_value\":10000,\"min_order_amount\":0,\"expired_at\":\"2020-01-01\",\"max_uses_per_user\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP expired coupon id extracted\",function(){const j=pm.response.json();pm.expect(j.id).to.exist;pm.environment.set(\"expiredCouponId\",String(j.id));});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Create one-use coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/coupons",
+            "description": "SETUP ONLY. Controlled coupon fixture; not counted as selected-API execution.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"{{oneUseCouponCode}}\",\"type\":\"fixed\",\"discount_value\":10000,\"min_order_amount\":0,\"expired_at\":\"2099-12-31\",\"max_uses_per_user\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP one-use coupon id extracted\",function(){const j=pm.response.json();pm.expect(j.id).to.exist;pm.environment.set(\"oneUseCouponId\",String(j.id));});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Discover and verify controlled coupons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/coupons",
+            "description": "SETUP/VERIFICATION ONLY; not counted as selected-API execution."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let ok=false;pm.test(\"SETUP controlled coupons exist and unknown code is absent\",function(){const rows=pm.response.json();pm.expect(rows).to.be.an(\"array\");[\"validCouponCode\",\"formulaCouponCode\",\"minOrderCouponCode\",\"expiredCouponCode\",\"oneUseCouponCode\"].forEach(v=>pm.expect(rows.some(c=>c.code===pm.environment.get(v)),v).to.eql(true));pm.expect(rows.some(c=>String(c.code)===pm.environment.get(\"unknownCouponCode\"))).to.eql(false);pm.expect(pm.environment.get(\"couponUserAbsenceReady\")).to.eql(\"true\");pm.expect(pm.environment.get(\"couponUserTokenReady\")).to.eql(\"true\");pm.expect(pm.environment.get(\"validCouponCodeLowercase\")).to.eql(pm.environment.get(\"validCouponCode\").toLowerCase());ok=true;});pm.environment.set(\"couponSetupReady\",String(ok));if(!ok)pm.environment.set(\"setupBlockedReason\",\"COUPON_CONTROLLED_FIXTURES_NOT_READY\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Record prior usage when required",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/coupon-usage",
+            "description": "SETUP ONLY for COUPON-GEN-009. Explicitly records usage and is not counted as apply-coupon execution.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"coupon_id\":{{oneUseCouponId}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (Number(pm.iterationData.get(\"setup_usage_count_before\")||0) < 1) pm.execution.skipRequest();"
+                  ,"if(pm.environment.get(\"couponSetupReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"COUPON_PRIOR_USAGE_SETUP_NOT_READY\");pm.execution.skipRequest();}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP response is JSON\", function () {",
+                  "  pm.response.to.be.withBody;",
+                  "  pm.response.json();",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CASE - Data-driven POST /api/apply-coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/apply-coupon",
+            "description": "Executes one workbook-derived coupon scenario. Authorization is added per approved EShop README FR-09 C4; original workbook headers remain in the data file.",
+            "body": {
+              "mode": "raw",
+              "raw": "{{caseRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (pm.iterationData.get(\"flow\") === \"USAGE_REPLAY_SEQUENCE\") {pm.execution.skipRequest();return;}",
+                  "if(pm.environment.get(\"couponSetupReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"COUPON_CASE_SETUP_NOT_READY\");console.warn(\"SETUP_BLOCKED\",pm.iterationData.get(\"scenario_id\"));pm.execution.skipRequest();return;}",
+                  "const raw=pm.iterationData.get(\"request_body\")||\"\";pm.variables.set(\"caseRequestBody\",raw===\"(empty body)\"?\"\":pm.variables.replaceIn(raw));",
+                  "if(/{{[^{}]+}}/.test(pm.variables.get(\"caseRequestBody\"))){pm.environment.set(\"setupBlockedReason\",\"COUPON_UNRESOLVED_PLACEHOLDER\");throw new Error(\"SETUP_BLOCKED: unresolved placeholder in coupon CASE body\");}",
+                  "if(pm.iterationData.get(\"case_id\")===\"COUPON-GEN-031\"){const a=Number(pm.environment.get(\"otherUserId\")),b=Number(pm.environment.get(\"validUserId\"));if(!Number.isFinite(a)||!Number.isFinite(b)||a===b){pm.environment.set(\"setupBlockedReason\",\"COUPON_OTHER_USER_INVALID\");pm.execution.skipRequest();return;}}",
+                  "pm.environment.set(\"caseExecuted\",\"true\");",
+                  "pm.request.headers.remove(\"Content-Type\");const ct=pm.iterationData.get(\"content_type\");if(ct)pm.request.headers.upsert({key:\"Content-Type\",value:ct});",
+                  "pm.request.headers.upsert({key:\"Authorization\",value:\"Bearer \"+pm.environment.get(\"userToken\")});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const caseId=pm.iterationData.get(\"case_id\"), scenarioId=pm.iterationData.get(\"scenario_id\"), mode=pm.iterationData.get(\"assertion_mode\");",
+                  "pm.test(\"[\"+scenarioId+\"] coupon traceability metadata is present\",function(){pm.expect(caseId).to.match(/^COUPON-/);});",
+                  "const original=String(pm.iterationData.get(\"original_expected_status\")||\"\");if(/^\\d+$/.test(original))pm.test(\"[\"+scenarioId+\"] original specified status\",function(){pm.response.to.have.status(Number(original));});",
+                  "let j=null;try{j=pm.response.json();}catch(e){}",
+                  "const success=pm.response.code>=200&&pm.response.code<300;",
+                  "if(mode===\"SUCCESS_SCHEMA\"||mode===\"PERCENT_FORMULA\"){",
+                  " pm.test(\"[\"+scenarioId+\"] discount success schema and invariant\",function(){pm.expect(j).to.be.an(\"object\");pm.expect(j.discount_amount).to.be.a(\"number\");pm.expect(j.final_amount).to.be.a(\"number\");const total=Number(pm.iterationData.get(\"input_total_amount\")||pm.environment.get(\"formulaTotalAmount\"));pm.expect(j.final_amount).to.eql(total-j.discount_amount);});",
+                  "}",
+                  "if(mode===\"IF_SUCCESS_VALIDATE_SCHEMA\"&&success)pm.test(\"[\"+scenarioId+\"] accepted response has valid schema\",function(){const total=Number(pm.iterationData.get(\"input_total_amount\"));pm.expect(j).to.be.an(\"object\");pm.expect(j.discount_amount).to.be.a(\"number\");pm.expect(j.final_amount).to.be.a(\"number\");pm.expect(j.final_amount).to.eql(total-j.discount_amount);});",
+                  "if(mode===\"IF_SUCCESS_FIXED_RULE\"&&success)pm.test(\"[\"+scenarioId+\"] client fields cannot override fixed coupon rule\",function(){const total=Number(pm.iterationData.get(\"input_total_amount\"));pm.expect(j).to.be.an(\"object\");pm.expect(j.discount_amount).to.eql(50000);pm.expect(j.final_amount).to.eql(total-50000);});",
+                  "if([\"IF_SUCCESS_VALIDATE_SCHEMA\",\"IF_SUCCESS_FIXED_RULE\"].includes(mode)&&!success)console.log(\"EXPLORATORY_SAFE_REJECTION\",{scenarioId,status:pm.response.code});",
+                  "if(mode===\"PERCENT_FORMULA\")pm.test(\"[\"+scenarioId+\"][FR-09] percent formula\",function(){const total=Number(pm.environment.get(\"formulaTotalAmount\")),value=Number(pm.environment.get(\"formulaDiscountValue\"));pm.expect(j.discount_amount).to.eql(total*value/100);});",
+                  "if(mode===\"REJECT_NO_DISCOUNT\")pm.test(\"[\"+scenarioId+\"] no valid discount is returned\",function(){pm.expect(!j||typeof j.discount_amount!==\"number\"||j.success!==true).to.eql(true);});",
+                  "const text=pm.response.text();pm.test(\"[\"+scenarioId+\"] no obvious internal stack leakage\",function(){pm.expect(text).not.to.match(/\\bat\\s+.*\\([^)]*server\\.js:\\d+/);});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SEQUENCE - First apply for usage replay",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/apply-coupon",
+            "description": "First selected-API call in COUPON-EXT-003 sequence.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"{{oneUseCouponCode}}\",\"total_amount\":500000,\"user_id\":{{validUserId}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (pm.iterationData.get(\"flow\") !== \"USAGE_REPLAY_SEQUENCE\") pm.execution.skipRequest();",
+                  "if(pm.environment.get(\"couponSetupReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"COUPON_REPLAY_CASE_SETUP_NOT_READY\");pm.execution.skipRequest();return;}",
+                  "pm.environment.set(\"caseExecuted\",\"true\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let ok=false;pm.test(\"[COUPON-EXT-003] first apply has discount schema\",function(){const j=pm.response.json();pm.expect(j.discount_amount).to.be.a(\"number\");pm.environment.set(\"replayCouponId\",String(j.coupon_id));ok=true;});pm.environment.set(\"couponReplayFirstReady\",String(ok));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Persist usage after first apply",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/coupon-usage",
+            "description": "Explicit setup between replay calls. Not counted as selected-API execution.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"coupon_id\":{{oneUseCouponId}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (pm.iterationData.get(\"flow\") !== \"USAGE_REPLAY_SEQUENCE\") pm.execution.skipRequest();",
+                  "if(pm.environment.get(\"caseExecuted\")!==\"true\"||pm.environment.get(\"couponReplayFirstReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"COUPON_REPLAY_PERSIST_BLOCKED\");pm.execution.skipRequest();}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP response is JSON\", function () {",
+                  "  pm.response.to.be.withBody;",
+                  "  pm.response.json();",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SEQUENCE - Replay apply after usage limit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/apply-coupon",
+            "description": "Second selected-API call for COUPON-EXT-003; no exact error status is invented.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"{{oneUseCouponCode}}\",\"total_amount\":500000,\"user_id\":{{validUserId}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (pm.iterationData.get(\"flow\") !== \"USAGE_REPLAY_SEQUENCE\") pm.execution.skipRequest();",
+                  "if(pm.environment.get(\"caseExecuted\")!==\"true\"||pm.environment.get(\"couponReplayFirstReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"COUPON_REPLAY_VERIFY_BLOCKED\");pm.execution.skipRequest();}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"[COUPON-EXT-003][FR-09 C5] replay returns no valid discount\",function(){let j=null;try{j=pm.response.json();}catch(e){}pm.expect(!j||typeof j.discount_amount!==\"number\"||j.success!==true).to.eql(true);});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CLEANUP - Delete fixed coupon",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/coupons/{{validCouponId}}",
+            "description": "Cleanup only; not selected-API execution."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP response is JSON\", function () {",
+                  "  pm.response.to.be.withBody;",
+                  "  pm.response.json();",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CLEANUP - Delete percent coupon",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/coupons/{{formulaCouponId}}",
+            "description": "Cleanup only; not selected-API execution."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP response is JSON\", function () {",
+                  "  pm.response.to.be.withBody;",
+                  "  pm.response.json();",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CLEANUP - Delete minimum-order coupon",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/coupons/{{minOrderCouponId}}",
+            "description": "Cleanup only; not selected-API execution."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP response is JSON\", function () {",
+                  "  pm.response.to.be.withBody;",
+                  "  pm.response.json();",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CLEANUP - Delete expired coupon",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/coupons/{{expiredCouponId}}",
+            "description": "Cleanup only; not selected-API execution."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP response is JSON\", function () {",
+                  "  pm.response.to.be.withBody;",
+                  "  pm.response.json();",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CLEANUP - Delete one-use coupon",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/coupons/{{oneUseCouponId}}",
+            "description": "Cleanup only; not selected-API execution."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"coupon\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP response is JSON\", function () {",
+                  "  pm.response.to.be.withBody;",
+                  "  pm.response.json();",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - PUT Admin Order Status - Data Run",
+      "description": "Run with postman/data/order_status_data.json. A fresh order is created per scenario and advanced explicitly to source_state.",
+      "item": [
+        {
+          "name": "SETUP - Login confirmed seed admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "SETUP ONLY. Uses source-confirmed admin seed credentials.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{seedAdminEmail}}\",\"password\":\"{{seedAdminPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"order_status\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "[\"adminToken\",\"adminUserId\",\"userToken\",\"validUserId\",\"orderUnderTestId\",\"otherOrderId\",\"unknownOrderId\",\"beforeOrderStatus\",\"tamperedAdminToken\",\"lastOrderCaseStatus\",\"orderStatusSnapshot\",\"orderAdminReady\",\"orderOwnerReady\",\"orderUserTokenReady\",\"primaryOrderReady\",\"secondaryOrderReady\"].forEach(k=>pm.environment.unset(k));",
+                  "pm.environment.set(\"orderSetupReady\",\"false\");pm.environment.set(\"caseExecuted\",\"false\");pm.environment.set(\"setupBlockedReason\",\"\");",
+                  "const key=pm.environment.get(\"runId\")+\"-O-\"+pm.info.iteration+\"-\"+pm.variables.replaceIn(\"{{$randomInt}}\");",
+                  "pm.environment.set(\"iterationKey\",key);pm.environment.set(\"validUserEmail\",\"order.\"+key+\"@example.test\");pm.environment.set(\"validUserPassword\",\"Hw06!\"+key);pm.environment.set(\"setupOrderTotal\",\"500000\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let ok=false;pm.test(\"SETUP admin login returned admin token\",function(){const j=pm.response.json();pm.expect(j.token).to.be.a(\"string\").and.not.empty;pm.expect(j.user.role).to.eql(\"admin\");pm.expect(Number.isFinite(Number(j.user.id))).to.eql(true);pm.environment.set(\"adminToken\",j.token);pm.environment.set(\"adminUserId\",String(j.user.id));ok=true;});pm.environment.set(\"orderAdminReady\",String(ok));if(!ok)pm.environment.set(\"setupBlockedReason\",\"ORDER_ADMIN_LOGIN_FAILED\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Register disposable order owner",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/register",
+            "description": "SETUP ONLY. Runtime user ID is extracted.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"HW06 Order Owner\",\"email\":\"{{validUserEmail}}\",\"password\":\"{{validUserPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"order_status\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let ok=false;pm.test(\"SETUP order owner id extracted\",function(){const j=pm.response.json();pm.expect(Number.isFinite(Number(j.id))).to.eql(true);pm.environment.set(\"validUserId\",String(j.id));ok=true;});pm.environment.set(\"orderOwnerReady\",String(ok));if(!ok)pm.environment.set(\"setupBlockedReason\",\"ORDER_OWNER_REGISTER_FAILED\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Login disposable order owner",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/login",
+            "description": "SETUP ONLY. Extracts owner token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{validUserEmail}}\",\"password\":\"{{validUserPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"order_status\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let ok=false;pm.test(\"SETUP normal user token extracted\",function(){const j=pm.response.json();pm.expect(j.token).to.be.a(\"string\").and.not.empty;pm.environment.set(\"userToken\",j.token);ok=true;});pm.environment.set(\"orderUserTokenReady\",String(ok));if(!ok)pm.environment.set(\"setupBlockedReason\",\"ORDER_OWNER_LOGIN_FAILED\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Checkout primary pending order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/checkout",
+            "description": "SETUP ONLY. Creates a fresh pending order; not counted as selected-API execution.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"total_amount\":{{setupOrderTotal}},\"shipping_address\":\"HW06 automated fixture\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"order_status\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let ok=false;pm.test(\"SETUP primary orderId extracted\",function(){const j=pm.response.json();pm.expect(Number.isFinite(Number(j.orderId))).to.eql(true);pm.environment.set(\"orderUnderTestId\",String(j.orderId));pm.environment.set(\"beforeOrderStatus\",\"pending\");ok=true;});pm.environment.set(\"primaryOrderReady\",String(ok));if(!ok)pm.environment.set(\"setupBlockedReason\",\"PRIMARY_ORDER_CREATE_FAILED\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Checkout secondary order for body/path mismatch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/checkout",
+            "description": "SETUP ONLY. Secondary dynamic order ID; not selected-API execution.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"total_amount\":{{setupOrderTotal}},\"shipping_address\":\"HW06 secondary fixture\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"order_status\") {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let ok=false;pm.test(\"SETUP secondary orderId extracted\",function(){const j=pm.response.json();pm.expect(Number.isFinite(Number(j.orderId))).to.eql(true);pm.environment.set(\"otherOrderId\",String(j.orderId));ok=true;});pm.environment.set(\"secondaryOrderReady\",String(ok));if(!ok)pm.environment.set(\"setupBlockedReason\",\"SECONDARY_ORDER_CREATE_FAILED\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - pending -> confirmed when source requires it",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/orders/{{orderUnderTestId}}/status",
+            "description": "SETUP ONLY. Builds source state and is not counted as execution of the selected test case.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"confirmed\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"order_status\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (!([\"confirmed\",\"shipping\",\"delivered\"].includes(pm.iterationData.get(\"source_state\")))) pm.execution.skipRequest();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP transition response is JSON\",function(){pm.response.json();});pm.environment.set(\"beforeOrderStatus\",\"confirmed\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - confirmed -> shipping when source requires it",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/orders/{{orderUnderTestId}}/status",
+            "description": "SETUP ONLY. Builds source state and is not counted as execution of the selected test case.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"shipping\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"order_status\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (!([\"shipping\",\"delivered\"].includes(pm.iterationData.get(\"source_state\")))) pm.execution.skipRequest();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP transition response is JSON\",function(){pm.response.json();});pm.environment.set(\"beforeOrderStatus\",\"shipping\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - shipping -> delivered when source requires it",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/orders/{{orderUnderTestId}}/status",
+            "description": "SETUP ONLY. Builds source state and is not counted as execution of the selected test case.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"delivered\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"order_status\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (!(pm.iterationData.get(\"source_state\") === \"delivered\")) pm.execution.skipRequest();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP transition response is JSON\",function(){pm.response.json();});pm.environment.set(\"beforeOrderStatus\",\"delivered\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - pending -> canceled when source requires it",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/orders/{{orderUnderTestId}}/status",
+            "description": "SETUP ONLY. Builds source state and is not counted as execution of the selected test case.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"canceled\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"order_status\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if (!(pm.iterationData.get(\"source_state\") === \"canceled\")) pm.execution.skipRequest();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"SETUP transition response is JSON\",function(){pm.response.json();});pm.environment.set(\"beforeOrderStatus\",\"canceled\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SETUP - Verify source orders and establish unknown order id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "X-Student-Id", "value": "{{studentId}}", "type": "text"},
+              {"key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text"}
+            ],
+            "url": "{{baseUrl}}/api/admin/orders",
+            "description": "SETUP ONLY. Verifies persisted source/secondary state and derives an absent order id from observed data."
+          },
+          "response": [],
+          "event": [
+            {"listen": "prerequest", "script": {"type": "text/javascript", "exec": [
+              "if(pm.iterationData.get(\"dataset\")!==\"order_status\")pm.execution.skipRequest();",
+              "if(pm.environment.get(\"orderAdminReady\")!==\"true\"||pm.environment.get(\"orderOwnerReady\")!==\"true\"||pm.environment.get(\"orderUserTokenReady\")!==\"true\"||pm.environment.get(\"primaryOrderReady\")!==\"true\"||pm.environment.get(\"secondaryOrderReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"ORDER_SOURCE_DISCOVERY_PREREQUISITE_MISSING\");pm.execution.skipRequest();}"
+            ]}},
+            {"listen": "test", "script": {"type": "text/javascript", "exec": [
+              "let ok=false;pm.test(\"SETUP source orders exist and unknown order id is absent\",function(){const rows=pm.response.json();pm.expect(rows).to.be.an(\"array\");const ids=rows.map(o=>Number(o.id)).filter(Number.isFinite),primary=rows.find(o=>Number(o.id)===Number(pm.environment.get(\"orderUnderTestId\"))),secondary=rows.find(o=>Number(o.id)===Number(pm.environment.get(\"otherOrderId\")));pm.expect(primary).to.exist;pm.expect(primary.status).to.eql(pm.iterationData.get(\"source_state\"));pm.expect(secondary).to.exist;pm.expect(secondary.status).to.eql(\"pending\");const candidate=(ids.length?Math.max(...ids):0)+1;pm.expect(ids).not.to.include(candidate);pm.environment.set(\"unknownOrderId\",String(candidate));pm.environment.set(\"orderStatusSnapshot\",JSON.stringify(Object.fromEntries(rows.map(o=>[String(o.id),o.status]))));ok=true;});pm.environment.set(\"orderSetupReady\",String(ok));if(!ok)pm.environment.set(\"setupBlockedReason\",\"ORDER_SOURCE_OR_ABSENCE_NOT_ESTABLISHED\");"
+            ]}}
+          ]
+        },
+        {
+          "name": "CASE - Data-driven PUT /api/admin/orders/:id/status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/orders/{{caseOrderId}}/status",
+            "description": "Executes the workbook-derived scenario. ORDERSTATUS-GEN-001 correction and README-derived assertions are traceable in order_status_data.json.",
+            "body": {
+              "mode": "raw",
+              "raw": "{{caseRequestBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"order_status\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if(pm.environment.get(\"orderSetupReady\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"ORDER_CASE_SETUP_NOT_READY\");console.warn(\"SETUP_BLOCKED\",pm.iterationData.get(\"scenario_id\"));pm.execution.skipRequest();return;}",
+                  "pm.variables.set(\"caseRequestBody\",pm.iterationData.get(\"request_body\")===\"(empty body)\"?\"\":pm.variables.replaceIn(pm.iterationData.get(\"request_body\")||\"\"));",
+                  "pm.variables.set(\"caseOrderId\",pm.variables.replaceIn(pm.iterationData.get(\"path_value\")||\"{{orderUnderTestId}}\"));",
+                  "if(/{{[^{}]+}}/.test(pm.variables.get(\"caseRequestBody\")+pm.variables.get(\"caseOrderId\"))){pm.environment.set(\"setupBlockedReason\",\"ORDER_UNRESOLVED_PLACEHOLDER\");throw new Error(\"SETUP_BLOCKED: unresolved placeholder in order CASE\");}",
+                  "pm.request.headers.remove(\"Content-Type\");const ct=pm.iterationData.get(\"content_type\");if(ct)pm.request.headers.upsert({key:\"Content-Type\",value:ct});",
+                  "pm.request.headers.remove(\"Authorization\");const profile=pm.iterationData.get(\"auth_profile\");",
+                  "if(profile===\"ADMIN\")pm.request.headers.upsert({key:\"Authorization\",value:\"Bearer \"+pm.environment.get(\"adminToken\")});",
+                  "if(profile===\"NORMAL_USER\")pm.request.headers.upsert({key:\"Authorization\",value:\"Bearer \"+pm.environment.get(\"userToken\")});",
+                  "if(profile===\"MALFORMED\")pm.request.headers.upsert({key:\"Authorization\",value:\"Bearer abc.def\"});",
+                  "if(profile===\"TAMPERED_ADMIN\"){const t=pm.environment.get(\"adminToken\")||\"\",parts=t.split(\".\");if(parts.length!==3||parts.some(p=>!p.length))throw new Error(\"SETUP_BLOCKED: admin token is not a three-segment JWT\");const segment=parts[2],i=Math.floor(segment.length/2),replacement=segment[i]===\"a\"?\"b\":\"a\";parts[2]=segment.slice(0,i)+replacement+segment.slice(i+1);const tampered=parts.join(\".\");if(tampered===t||tampered.split(\".\").length!==3)throw new Error(\"SETUP_BLOCKED: JWT tampering invariant failed\");pm.environment.set(\"tamperedAdminToken\",tampered);pm.request.headers.upsert({key:\"Authorization\",value:\"Bearer \"+tampered});}",
+                  "pm.environment.set(\"caseExecuted\",\"true\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const caseId=pm.iterationData.get(\"case_id\"),scenarioId=pm.iterationData.get(\"scenario_id\");",
+                  "pm.test(\"[\"+scenarioId+\"] order traceability metadata is present\",function(){pm.expect(caseId).to.match(/^ORDERSTATUS-/);});",
+                  "const original=String(pm.iterationData.get(\"original_expected_status\")||\"\");if(/^\\d+$/.test(original))pm.test(\"[\"+scenarioId+\"] original specified status\",function(){pm.response.to.have.status(Number(original));});",
+                  "pm.environment.set(\"lastOrderCaseStatus\",String(pm.response.code));",
+                  "pm.test(\"[\"+scenarioId+\"] no internal details leakage\",function(){pm.expect(pm.response.text()).not.to.match(/(at\\s+[^\\n]+\\([^\\n]*:\\d+:\\d+\\)|[A-Za-z]:\\\\[^\\s]+|\\/(?:home|usr|var|app)\\/[^\\s]+|SQLITE_|SELECT\\s+.+\\s+FROM|Sequelize|TypeError:|ReferenceError:)/i);});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "VERIFY - Read persisted order state",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Student-Id",
+                "value": "{{studentId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/orders",
+            "description": "Read-after verification for the selected order-status case. Exact response status is not invented."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const dataset = pm.iterationData.get(\"dataset\");",
+                  "if (dataset !== \"order_status\") {",
+                  "  pm.execution.skipRequest();",
+                  "}",
+                  "if(pm.environment.get(\"orderSetupReady\")!==\"true\"||pm.environment.get(\"caseExecuted\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"ORDER_VERIFICATION_BLOCKED\");console.warn(\"SETUP_BLOCKED verification\");pm.execution.skipRequest();return;}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.environment.get(\"orderSetupReady\")!==\"true\"||pm.environment.get(\"caseExecuted\")!==\"true\"){pm.environment.set(\"setupBlockedReason\",\"ORDER_VERIFICATION_BLOCKED\");throw new Error(\"SETUP_BLOCKED: verification requires an executed CASE\");}",
+                  "const scenarioId=pm.iterationData.get(\"scenario_id\"),mode=pm.iterationData.get(\"assertion_mode\"),source=pm.iterationData.get(\"source_state\"),target=pm.iterationData.get(\"target_status\");",
+                  "const rows=pm.response.json(),id=Number(pm.environment.get(\"orderUnderTestId\")),order=rows.find(o=>Number(o.id)===id);",
+                  "pm.test(\"[\"+scenarioId+\"] verification order exists\",function(){pm.expect(order).to.exist;});",
+                  "if(mode===\"STATE_CHANGED_TO_TARGET\")pm.test(\"[\"+scenarioId+\"] persisted state changed per FR-10\",function(){pm.expect(order.status).to.eql(target);});",
+                  "if(mode===\"PATH_TARGET_ONLY\"){const secondary=rows.find(o=>Number(o.id)===Number(pm.environment.get(\"otherOrderId\")));pm.test(\"[\"+scenarioId+\"] path-target order changed\",function(){pm.expect(order.status).to.eql(target);});pm.test(\"[\"+scenarioId+\"] body-referenced secondary order stayed unchanged\",function(){pm.expect(secondary).to.exist;pm.expect(secondary.status).to.eql(\"pending\");});}",
+                  "if(mode===\"DUPLICATE_STATUS_OBSERVATION\"){const snapshot=JSON.parse(pm.environment.get(\"orderStatusSnapshot\")||\"{}\");pm.test(\"[\"+scenarioId+\"] duplicate-key outcome is parser-justified\",function(){pm.expect([\"pending\",\"confirmed\"]).to.include(order.status);});pm.test(\"[\"+scenarioId+\"] duplicate-key request does not mutate unrelated orders\",function(){rows.filter(o=>Number(o.id)!==id&&Object.prototype.hasOwnProperty.call(snapshot,String(o.id))).forEach(o=>pm.expect(o.status).to.eql(snapshot[String(o.id)]));});console.log(\"ORDERSTATUS-EXT-005 parser observation\",{persistedStatus:order&&order.status,effectiveValue:order&&order.status===\"confirmed\"?\"first-key confirmed\":\"last-key delivered safely rejected\"});}",
+                  "if(mode===\"STATE_UNCHANGED_INVALID_TRANSITION\"||mode===\"STATE_UNCHANGED_AUTHORIZATION\")pm.test(\"[\"+scenarioId+\"] persisted state is unchanged\",function(){pm.expect(order.status).to.eql(source);});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "99 - Deferred / Not Automated",
+      "description": "BLOCKED_NOT_AUTOMATED: inactive-coupon scenario is deferred because no API can create is_active=0. No database or SUT modification is authorized.",
+      "item": []
+    }
+  ]
+}
