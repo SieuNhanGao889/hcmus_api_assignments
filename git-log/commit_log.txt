@@ -1,8 +1,8 @@
 HW06 Git Commit Log
-Source: git log --date=iso-strict --pretty=format:<hash><TAB><date><TAB><author><TAB><subject> --reverse
+Source: git --no-pager log --no-patch --reverse --date=iso-strict --pretty=format:<hash><TAB><date><TAB><author><TAB><subject>
 
-NOTE: This snapshot reflects committed history through c6bb21de39559396a8799132e3ef4a405fb820db.
-TODO: After committing final documentation, regenerate this file so the submission contains the final commit.
+Snapshot through committed HEAD 5a8bf09ab98a8f393158103f5414542d82289f08.
+The later packaging/commit-log commit cannot list its own final hash because a commit cannot contain a file that already knows that same hash.
 
 dc824f928ff73974df71c600ffec74c3da398fd3	2026-08-20T21:35:47+07:00	SieuNhanGao889	chore: initialize HW06 API testing workspace
 3358441ce0a1179f784f2f566b88f0be69f98191	2026-08-20T22:27:14+07:00	SieuNhanGao889	add: setup agent skill
@@ -23,3 +23,4 @@ b0c859fc0e4118eb89ca72964043fce6ba4f1b7b	2026-08-21T09:33:05+07:00	SieuNhanGao88
 82c9633c9126050270094c72575c77c294d87057	2026-08-21T10:10:11+07:00	SieuNhanGao889	add: bug report and github issuses
 a0adb735f70f48788cd7edefd7d11b32d7b4d74a	2026-08-21T10:56:59+07:00	SieuNhanGao889	setup: ci/cd
 c6bb21de39559396a8799132e3ef4a405fb820db	2026-08-21T11:33:34+07:00	SieuNhanGao889	docs: finalize API testing evidence and reports
+5a8bf09ab98a8f393158103f5414542d82289f08	2026-08-21T12:00:58+07:00	SieuNhanGao889	finalize docs

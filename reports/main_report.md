@@ -51,7 +51,7 @@ Artifact:
 - Demo prompt: [prompt-demo.md](../agent-skill/demo/prompt-demo.md)
 - Video thật: [CSC13102_23KTPM1_23127364_HW6](https://youtu.be/4fAWYhzeHzQ)
 
-`NEEDS_HUMAN_CONFIRMATION`: Sinh viên phải xác nhận diagram cuối là self-drawn theo anti-AI constraint và chỉnh AI audit nếu câu chữ hiện tại có thể bị hiểu là AI tạo diagram.
+`COMPLETE`: Diagram cuối do sinh viên tự thiết kế và tự vẽ sơ bộ; AI audit ghi rõ AI không thiết kế và tạo `design/diagram.png`.
 
 ## 5. Test-case generation, human audit và extension
 
